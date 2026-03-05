@@ -70,11 +70,11 @@ export default function LandingPage() {
           <div className="mx-auto max-w-2xl text-center">
             <Badge className="mb-4">Now in beta</Badge>
             <h1 className="text-4xl font-bold tracking-heading sm:text-5xl lg:text-6xl">
-              Create AI chatbots that
-              <span className="text-primary"> sound like you</span>
+              Your AI that
+              <span className="text-primary"> sounds like you</span>
             </h1>
             <p className="mt-4 text-lg text-muted-fg sm:text-xl">
-              Build personal AI bots for hiring, networking, investor outreach,
+              Build your Personal AI for hiring, networking, investor outreach,
               and more. Powered by your memory, voice, and style.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -175,7 +175,7 @@ export default function LandingPage() {
       <footer className="border-t border-border">
         <div className="mx-auto max-w-6xl px-4 py-8">
           <p className="text-center text-sm text-muted-fg">
-            PersonaBots — AI chatbots that sound like you.
+            Personal &mdash; AI that sounds like you.
           </p>
         </div>
       </footer>

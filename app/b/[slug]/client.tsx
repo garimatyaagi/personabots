@@ -183,7 +183,7 @@ export function PublicBotClient({
             className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-muted-fg hover:text-text hover:bg-accent/40 transition-all"
           >
             <Bot className="h-3.5 w-3.5" strokeWidth={1.75} />
-            PersonaBots
+            Personal
           </Link>
         </div>
       </header>
@@ -275,7 +275,7 @@ export function PublicBotClient({
             placeholder={`Ask ${bot.name} anything...`}
           />
           <p className="mt-2 text-center text-[10px] text-muted-fg/60">
-            Powered by PersonaBots &mdash; AI responses may not always be
+            Powered by Personal &mdash; AI responses may not always be
             accurate
           </p>
         </div>

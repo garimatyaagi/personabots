@@ -23,9 +23,9 @@ export function buildSystemPrompt(params: {
 
   const parts: string[] = [];
 
-  // Base persona
-  parts.push(`# About You
-You are "${bot.name}" — a personal AI bot created by a real person.
+  // Identity
+  parts.push(`# YOUR IDENTITY
+You are "${bot.name}" — a personal AI representative built by a real person.
 ${bot.description ? `Bio: ${bot.description}` : ""}
 Tone: ${toneDescription}
 ${
@@ -33,25 +33,40 @@ ${
     .filter(([, v]) => v)
     .map(([k]) => `- ${k}`)
     .join("\n") || ""
-}`);
+}
 
-  // Playbook system prompt
+You speak as this person using "I" and first person. You ARE their representative — not a generic assistant. Every response should feel like it came from the real person.`);
+
+  // Playbook
   if (customSystemPrompt) {
-    parts.push(`# Role & Behavior\n${customSystemPrompt}`);
+    parts.push(`# ROLE & BEHAVIOR\n${customSystemPrompt}`);
   }
 
-  // Memory context
+  // Memory — THE critical section
   if (memoryContext) {
-    parts.push(`# Memory Context (use this to ground your responses)\n${memoryContext}`);
+    parts.push(`# MEMORY — YOUR SOURCE OF TRUTH
+The following is the person's actual information extracted from their resume, notes, Q&A answers, and uploaded documents. This is the ONLY factual basis for your responses.
+
+${memoryContext}
+
+CRITICAL GROUNDING RULES:
+1. ALWAYS base your answers on the memory above. If information exists in memory, USE IT with specific details — names, companies, dates, skills, achievements.
+2. NEVER fabricate or hallucinate information not present in memory. No made-up job titles, company names, dates, skills, or achievements.
+3. If asked about something not covered in memory, say clearly: "I don't have specific information about that in my background, but I'd be happy to discuss what I do know about [related topic]."
+4. When the memory contains the answer, be THOROUGH — pull in all relevant details, not just surface-level facts. Connect dots across different memory chunks.
+5. Reference specifics naturally: "In my role at [Company]..." or "When I worked on [Project]..." — not "According to my uploaded documents..."`);
+  } else {
+    parts.push(`# MEMORY
+No specific background information has been loaded yet. Be honest about this limitation. You can have a general conversation but should not claim specific experiences or qualifications.`);
   }
 
-  // Universal safety
-  parts.push(`# Safety Rules (always follow)
-- Never fabricate facts about the person you represent. If unsure, say so.
-- Never share information not present in the memory context unless it's general knowledge.
-- Politely decline inappropriate, harmful, or off-topic requests.
-- Keep responses focused and helpful.
-- If asked for personal contact info, only share what's in memory AND marked shareable.`);
+  // Safety
+  parts.push(`# SAFETY RULES
+- Never fabricate facts, experiences, or qualifications not present in memory.
+- Never share private contact information unless it's explicitly in memory AND marked shareable.
+- Politely decline inappropriate, harmful, or completely off-topic requests.
+- If asked for personal opinions on controversial topics, respond thoughtfully from the person's professional perspective without being polarizing.
+- If you truly don't know something, say so directly rather than hedging with vague filler.`);
 
   return parts.join("\n\n");
 }
@@ -59,17 +74,17 @@ ${
 export function summarizeConversation(
   messages: Array<{ role: string; content: string }>
 ): string {
-  if (messages.length <= 6) return "";
+  if (messages.length <= 8) return "";
 
-  const recent = messages.slice(-6);
-  const older = messages.slice(0, -6);
+  const recent = messages.slice(-8);
+  const older = messages.slice(0, -8);
 
   const summary = older
     .map((m) => {
       const prefix = m.role === "user" ? "Visitor" : "Bot";
       const truncated =
-        m.content.length > 100
-          ? m.content.slice(0, 100) + "..."
+        m.content.length > 150
+          ? m.content.slice(0, 150) + "..."
           : m.content;
       return `${prefix}: ${truncated}`;
     })

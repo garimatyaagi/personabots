@@ -30,13 +30,14 @@ export async function createChatStream(params: {
     .order("created_at", { ascending: true })
     .limit(50);
 
-  // 3. Retrieve relevant memory
+  // 3. Retrieve relevant memory — fetch more chunks for richer context
   const memoryResults = await retrieveMemory({
     userId: bot.user_id,
     botId: bot.id,
     query: userMessage,
-    topK: 8,
+    topK: 12,
     publicOnly: isPublic,
+    similarityThreshold: 0.25,
   });
 
   const memoryContext = formatMemoryContext(memoryResults);
@@ -50,7 +51,7 @@ export async function createChatStream(params: {
 
   // 5. Build message list
   const conversationSummary = summarizeConversation(history || []);
-  const recentHistory = (history || []).slice(-6);
+  const recentHistory = (history || []).slice(-8);
 
   const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
     { role: "system", content: systemPrompt },
@@ -74,13 +75,13 @@ export async function createChatStream(params: {
     messages.push({ role: "user", content: userMessage });
   }
 
-  // 6. Stream response
+  // 6. Stream response — gpt-4o for quality, low temp for factual grounding
   const stream = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-4o",
     messages,
     stream: true,
-    max_tokens: 2000,
-    temperature: 0.7,
+    max_tokens: 4000,
+    temperature: 0.4,
   });
 
   return stream;

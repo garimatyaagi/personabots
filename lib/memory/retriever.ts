@@ -48,9 +48,8 @@ export function formatMemoryContext(results: SearchResult[]): string {
   if (results.length === 0) return "";
 
   const chunks = results.map((r, i) => {
-    const source = r.bot_id ? "[Bot Memory]" : "[Personal Memory]";
-    return `${source} (relevance: ${(r.combined_score * 100).toFixed(0)}%)\n${r.chunk_text}`;
+    return `[${i + 1}] ${r.chunk_text}`;
   });
 
-  return `--- Retrieved Memory Context ---\n${chunks.join("\n\n---\n\n")}\n--- End Memory Context ---`;
+  return chunks.join("\n\n");
 }

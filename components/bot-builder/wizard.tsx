@@ -144,12 +144,23 @@ export function BotBuilderWizard() {
 
       // 3. Upload files as memory
       for (const file of state.memory.uploads) {
-        const formData = new FormData();
-        formData.append("type", "file");
-        formData.append("file", file);
-        formData.append("botId", bot.id);
-        formData.append("isShareable", "true");
-        await fetch("/api/memory/upload", { method: "POST", body: formData });
+        try {
+          const formData = new FormData();
+          formData.append("type", "file");
+          formData.append("file", file);
+          formData.append("botId", bot.id);
+          formData.append("isShareable", "true");
+          const uploadRes = await fetch("/api/memory/upload", {
+            method: "POST",
+            body: formData,
+          });
+          if (!uploadRes.ok) {
+            const errData = await uploadRes.json().catch(() => ({}));
+            console.error(`File upload failed (${file.name}):`, errData);
+          }
+        } catch (uploadErr) {
+          console.error(`File upload error (${file.name}):`, uploadErr);
+        }
       }
 
       // 4. Save links as memory

@@ -84,7 +84,7 @@ export default function ExplorePage() {
         {/* Hero */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-semibold tracking-heading">
-            Explore PersonaBots
+            Explore
           </h1>
           <p className="mt-2 text-muted-fg max-w-lg mx-auto">
             Discover AI-powered personal bots. Chat with anyone&apos;s bot to

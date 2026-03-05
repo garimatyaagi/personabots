@@ -14,7 +14,7 @@ export function Navbar() {
             <Bot className="h-4 w-4 text-[#f8faed]" strokeWidth={1.75} />
           </div>
           <span className="text-lg font-semibold tracking-heading">
-            PersonaBots
+            Personal
           </span>
         </Link>
 

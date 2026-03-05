@@ -84,16 +84,20 @@ export async function processFileUpload(params: {
     );
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(new Uint8Array(arrayBuffer));
   const rawText = await parseFile(buffer, mimeType, file.name);
 
   if (!rawText || rawText.length < 10) {
-    throw new Error("File appears to be empty or could not be parsed.");
+    throw new Error(
+      `File "${file.name}" appears to be empty or could not be parsed (got ${rawText?.length || 0} chars).`
+    );
   }
 
+  // Auto-detect source type from filename
+  const lowerName = file.name.toLowerCase();
   const sourceType: MemorySourceType =
-    file.name.toLowerCase().includes("resume") ||
-    file.name.toLowerCase().includes("cv")
+    lowerName.includes("resume") || lowerName.includes("cv")
       ? "resume"
       : "upload";
 
