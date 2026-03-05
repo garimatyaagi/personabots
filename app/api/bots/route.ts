@@ -76,10 +76,18 @@ export async function POST(req: NextRequest) {
     const supabase = createServerClient();
 
     // Ensure user exists
-    await supabase.from("users").upsert(
+    const { error: userError } = await supabase.from("users").upsert(
       { id: userId, email: "" },
       { onConflict: "id", ignoreDuplicates: true }
     );
+
+    if (userError) {
+      console.error("User upsert failed:", userError);
+      return NextResponse.json(
+        { error: `Database setup issue: ${userError.message}`, hint: userError.hint, code: userError.code },
+        { status: 500 }
+      );
+    }
 
     // Check slug uniqueness
     const { data: existing } = await supabase
@@ -113,7 +121,7 @@ export async function POST(req: NextRequest) {
     if (botError || !bot) {
       console.error("Failed to create bot:", botError);
       return NextResponse.json(
-        { error: "Failed to create bot" },
+        { error: `Failed to create bot: ${botError?.message || "Unknown error"}`, code: botError?.code, hint: botError?.hint },
         { status: 500 }
       );
     }
@@ -148,9 +156,10 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    console.error("Create bot error:", error);
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Create bot error:", msg, error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: `Bot creation failed: ${msg}` },
       { status: 500 }
     );
   }
