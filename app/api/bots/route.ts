@@ -3,6 +3,8 @@ import { auth } from "@clerk/nextjs/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
+export const dynamic = "force-dynamic";
+
 const createBotSchema = z.object({
   name: z.string().min(1).max(100),
   slug: z

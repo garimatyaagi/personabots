@@ -3,6 +3,8 @@ import { auth } from "@clerk/nextjs/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/bots/:botId — get bot details
 export async function GET(
   req: NextRequest,

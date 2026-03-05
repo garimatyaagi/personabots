@@ -3,6 +3,8 @@ import { auth } from "@clerk/nextjs/server";
 import { processFileUpload, processAndStoreMemory } from "@/lib/memory/pipeline";
 import { rateLimit } from "@/lib/utils/rate-limit";
 
+export const dynamic = "force-dynamic";
+
 // POST /api/memory/upload — upload file or text to memory
 export async function POST(req: NextRequest) {
   const { userId } = await auth();

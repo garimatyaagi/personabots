@@ -3,6 +3,8 @@ import { createServerClient } from "@/lib/supabase/server";
 import { createChatStream, storeAssistantMessage } from "@/lib/chat/runtime";
 import { rateLimit } from "@/lib/utils/rate-limit";
 import { checkModeration } from "@/lib/utils/moderation";
+
+export const dynamic = "force-dynamic";
 import { v4 as uuidv4 } from "uuid";
 
 // POST /api/chat — streaming chat endpoint

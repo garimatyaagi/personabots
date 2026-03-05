@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createServerClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 // PATCH /api/memory/:itemId — update memory item (shareability, title, bot assignment)
 export async function PATCH(
   req: NextRequest,
