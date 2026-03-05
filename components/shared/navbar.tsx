@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import { Bot } from "lucide-react";
+import { Bot, Compass } from "lucide-react";
 
 export function Navbar() {
   return (
@@ -19,6 +19,12 @@ export function Navbar() {
         </Link>
 
         <nav className="flex items-center gap-3">
+          <Link href="/explore">
+            <Button variant="ghost" size="sm" className="gap-1.5">
+              <Compass className="h-3.5 w-3.5" strokeWidth={1.75} />
+              Explore
+            </Button>
+          </Link>
           <SignedOut>
             <Link href="/sign-in">
               <Button variant="ghost" size="sm">

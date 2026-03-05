@@ -39,32 +39,16 @@ export function StepMemory({ state, onChange }: StepMemoryProps) {
   const [linkInput, setLinkInput] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files) return;
 
     const newFiles = Array.from(files);
     onChange({ uploads: [...memory.uploads, ...newFiles] });
 
-    // Upload each file
+    // Mark files as ready — actual upload happens on Publish
     for (const file of newFiles) {
-      setUploadStatus((prev) => ({ ...prev, [file.name]: "uploading" }));
-      try {
-        const formData = new FormData();
-        formData.append("type", "file");
-        formData.append("file", file);
-        formData.append("isShareable", "true");
-
-        const res = await fetch("/api/memory/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!res.ok) throw new Error("Upload failed");
-        setUploadStatus((prev) => ({ ...prev, [file.name]: "done" }));
-      } catch {
-        setUploadStatus((prev) => ({ ...prev, [file.name]: "error" }));
-      }
+      setUploadStatus((prev) => ({ ...prev, [file.name]: "done" }));
     }
   }
 

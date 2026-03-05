@@ -32,7 +32,7 @@ const initialState: BotBuilderState = {
     type: "hiring",
     config: {},
   },
-  access: "private",
+  access: "public",
 };
 
 export function BotBuilderWizard() {
@@ -142,7 +142,17 @@ export function BotBuilderWizard() {
         await fetch("/api/memory/upload", { method: "POST", body: formData });
       }
 
-      // 3. Save links as memory
+      // 3. Upload files as memory
+      for (const file of state.memory.uploads) {
+        const formData = new FormData();
+        formData.append("type", "file");
+        formData.append("file", file);
+        formData.append("botId", bot.id);
+        formData.append("isShareable", "true");
+        await fetch("/api/memory/upload", { method: "POST", body: formData });
+      }
+
+      // 4. Save links as memory
       for (const link of state.memory.links) {
         const formData = new FormData();
         formData.append("type", "text");
