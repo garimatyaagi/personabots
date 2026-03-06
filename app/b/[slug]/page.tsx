@@ -12,7 +12,7 @@ export default async function PublicBotPage({ params }: Props) {
   const supabase = createServerClient();
 
   // Fetch bot by slug
-  const { data: bot } = await supabase
+  const { data: bot, error: botError } = await supabase
     .from("bots")
     .select(
       `
@@ -23,6 +23,10 @@ export default async function PublicBotPage({ params }: Props) {
     )
     .eq("slug", slug)
     .single();
+
+  if (botError) {
+    console.error("Public bot fetch error:", botError.message, botError.code);
+  }
 
   if (!bot) notFound();
 
