@@ -6,6 +6,13 @@ import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
+const socialLinksSchema = z.object({
+  linkedin: z.string().max(500).optional().or(z.literal("")),
+  twitter: z.string().max(500).optional().or(z.literal("")),
+  github: z.string().max(500).optional().or(z.literal("")),
+  website: z.string().max(500).optional().or(z.literal("")),
+}).default({});
+
 const createBotSchema = z.object({
   name: z.string().min(1).max(100),
   slug: z
@@ -16,6 +23,10 @@ const createBotSchema = z.object({
   description: z.string().max(500).optional(),
   tone: z.number().min(0).max(100).default(50),
   personality_traits: z.record(z.boolean()).default({}),
+  headline: z.string().max(200).optional(),
+  social_links: socialLinksSchema.optional(),
+  skills: z.array(z.string().max(50)).max(20).default([]),
+  about: z.string().max(2000).optional(),
   is_public: z.boolean().default(false),
   use_case_type: z.enum([
     "hiring",
@@ -123,6 +134,10 @@ export async function POST(req: NextRequest) {
         description: parsed.description || null,
         tone: parsed.tone,
         personality_traits: parsed.personality_traits,
+        headline: parsed.headline || null,
+        social_links: parsed.social_links || {},
+        skills: parsed.skills || [],
+        about: parsed.about || null,
         is_public: parsed.is_public,
       })
       .select()

@@ -26,6 +26,13 @@ export interface User {
   updated_at: string;
 }
 
+export interface SocialLinks {
+  linkedin?: string;
+  twitter?: string;
+  github?: string;
+  website?: string;
+}
+
 export interface Bot {
   id: string;
   user_id: string;
@@ -35,6 +42,10 @@ export interface Bot {
   avatar_url: string | null;
   tone: number;
   personality_traits: Record<string, boolean>;
+  headline: string | null;
+  social_links: SocialLinks;
+  skills: string[];
+  about: string | null;
   is_public: boolean;
   created_at: string;
   updated_at: string;
@@ -135,6 +146,10 @@ export interface BotBuilderState {
     description: string;
     tone: number;
     personality_traits: Record<string, boolean>;
+    headline: string;
+    social_links: SocialLinks;
+    skills: string[];
+    about: string;
   };
   memory: {
     uploads: File[];

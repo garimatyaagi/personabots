@@ -32,11 +32,22 @@ export async function GET(
   return NextResponse.json({ bot });
 }
 
+const socialLinksSchema = z.object({
+  linkedin: z.string().max(500).optional().or(z.literal("")),
+  twitter: z.string().max(500).optional().or(z.literal("")),
+  github: z.string().max(500).optional().or(z.literal("")),
+  website: z.string().max(500).optional().or(z.literal("")),
+});
+
 const updateBotSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
   tone: z.number().min(0).max(100).optional(),
   personality_traits: z.record(z.boolean()).optional(),
+  headline: z.string().max(200).optional().nullable(),
+  social_links: socialLinksSchema.optional(),
+  skills: z.array(z.string().max(50)).max(20).optional(),
+  about: z.string().max(2000).optional().nullable(),
   is_public: z.boolean().optional(),
 });
 

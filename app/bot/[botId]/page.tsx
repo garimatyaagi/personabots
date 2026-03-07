@@ -9,18 +9,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Toggle } from "@/components/ui/toggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/shared/loading";
+import { SkillsInput } from "@/components/bot-builder/skills-input";
+import { SocialLinksInput } from "@/components/bot-builder/social-links-input";
 import {
   Save,
   Trash2,
   ExternalLink,
   Copy,
   Check,
-  Upload,
   FileText,
 } from "lucide-react";
-import type { Bot, MemoryItem } from "@/types";
+import type { Bot, MemoryItem, SocialLinks } from "@/types";
 
 export default function BotSettingsPage() {
   const params = useParams();
@@ -38,6 +38,10 @@ export default function BotSettingsPage() {
   const [description, setDescription] = useState("");
   const [tone, setTone] = useState(50);
   const [isPublic, setIsPublic] = useState(false);
+  const [headline, setHeadline] = useState("");
+  const [about, setAbout] = useState("");
+  const [socialLinks, setSocialLinks] = useState<SocialLinks>({});
+  const [skills, setSkills] = useState<string[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -55,6 +59,10 @@ export default function BotSettingsPage() {
           setDescription(botData.bot.description || "");
           setTone(botData.bot.tone);
           setIsPublic(botData.bot.is_public);
+          setHeadline(botData.bot.headline || "");
+          setAbout(botData.bot.about || "");
+          setSocialLinks(botData.bot.social_links || {});
+          setSkills(botData.bot.skills || []);
         }
         setMemoryItems(memData.items || []);
       } catch (error) {
@@ -72,7 +80,16 @@ export default function BotSettingsPage() {
       await fetch(`/api/bots/${botId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, tone, is_public: isPublic }),
+        body: JSON.stringify({
+          name,
+          description,
+          tone,
+          is_public: isPublic,
+          headline,
+          about,
+          social_links: socialLinks,
+          skills,
+        }),
       });
     } finally {
       setSaving(false);
@@ -170,11 +187,24 @@ export default function BotSettingsPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
+              <Input
+                label="Headline"
+                value={headline}
+                onChange={(e) => setHeadline(e.target.value)}
+                placeholder="e.g., Full-Stack Developer | 5 Years at Google"
+              />
               <Textarea
-                label="Description"
+                label="Short bio"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
+              />
+              <Textarea
+                label="About (extended bio)"
+                value={about}
+                onChange={(e) => setAbout(e.target.value)}
+                placeholder="A longer bio about yourself..."
+                rows={4}
               />
               <Slider
                 label="Tone"
@@ -189,12 +219,25 @@ export default function BotSettingsPage() {
                 label="Public bot"
                 description="Allow anyone to chat with this bot"
               />
-              <Button onClick={handleSave} isLoading={saving} className="w-fit gap-2">
-                <Save className="h-4 w-4" strokeWidth={1.75} />
-                Save changes
-              </Button>
             </CardContent>
           </Card>
+
+          {/* Profile */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <SkillsInput skills={skills} onChange={setSkills} />
+              <SocialLinksInput links={socialLinks} onChange={setSocialLinks} />
+            </CardContent>
+          </Card>
+
+          {/* Save button */}
+          <Button onClick={handleSave} isLoading={saving} className="w-fit gap-2">
+            <Save className="h-4 w-4" strokeWidth={1.75} />
+            Save changes
+          </Button>
 
           {/* Memory */}
           <Card>

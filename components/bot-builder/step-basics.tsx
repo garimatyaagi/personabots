@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Toggle } from "@/components/ui/toggle";
+import { SkillsInput } from "@/components/bot-builder/skills-input";
+import { SocialLinksInput } from "@/components/bot-builder/social-links-input";
 import type { BotBuilderState } from "@/types";
 
 interface StepBasicsProps {
@@ -67,6 +69,14 @@ export function StepBasics({ state, onChange }: StepBasicsProps) {
         Your bot will be at: /b/{basics.slug || "your-slug"}
       </p>
 
+      <Input
+        id="bot-headline"
+        label="Headline"
+        placeholder="e.g., Full-Stack Developer | 5 Years at Google"
+        value={basics.headline}
+        onChange={(e) => onChange({ headline: e.target.value })}
+      />
+
       <Textarea
         id="bot-description"
         label="Short bio"
@@ -74,6 +84,15 @@ export function StepBasics({ state, onChange }: StepBasicsProps) {
         value={basics.description}
         onChange={(e) => onChange({ description: e.target.value })}
         rows={3}
+      />
+
+      <Textarea
+        id="bot-about"
+        label="About (extended bio)"
+        placeholder="A longer bio about yourself, your experience, achievements, and what you're looking for..."
+        value={basics.about}
+        onChange={(e) => onChange({ about: e.target.value })}
+        rows={4}
       />
 
       <Slider
@@ -111,6 +130,16 @@ export function StepBasics({ state, onChange }: StepBasicsProps) {
           ))}
         </div>
       </div>
+
+      <SkillsInput
+        skills={basics.skills}
+        onChange={(skills) => onChange({ skills })}
+      />
+
+      <SocialLinksInput
+        links={basics.social_links}
+        onChange={(social_links) => onChange({ social_links })}
+      />
     </div>
   );
 }

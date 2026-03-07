@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPlaybook, getPlaybookDescription } from "@/lib/playbooks";
-import { Globe, Lock, Eye } from "lucide-react";
-import type { BotBuilderState, AccessLevel } from "@/types";
+import { Globe, Lock, Eye, Linkedin, Twitter, Github } from "lucide-react";
+import type { BotBuilderState, AccessLevel, SocialLinks } from "@/types";
 
 interface StepPreviewProps {
   state: BotBuilderState;
@@ -47,8 +47,49 @@ export function StepPreview({ state, onAccessChange }: StepPreviewProps) {
             </div>
           </div>
 
+          {state.basics.headline && (
+            <p className="text-sm text-muted-fg">{state.basics.headline}</p>
+          )}
+
           {state.basics.description && (
             <p className="text-sm">{state.basics.description}</p>
+          )}
+
+          {/* Social links */}
+          {hasSocialLinks(state.basics.social_links) && (
+            <div className="flex items-center gap-2">
+              {state.basics.social_links.linkedin && (
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/50">
+                  <Linkedin className="h-3.5 w-3.5 text-text" strokeWidth={1.75} />
+                </div>
+              )}
+              {state.basics.social_links.twitter && (
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/50">
+                  <Twitter className="h-3.5 w-3.5 text-text" strokeWidth={1.75} />
+                </div>
+              )}
+              {state.basics.social_links.github && (
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/50">
+                  <Github className="h-3.5 w-3.5 text-text" strokeWidth={1.75} />
+                </div>
+              )}
+              {state.basics.social_links.website && (
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/50">
+                  <Globe className="h-3.5 w-3.5 text-text" strokeWidth={1.75} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Skills */}
+          {state.basics.skills.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {state.basics.skills.map((skill, i) => (
+                <Badge key={i} variant="default" className="text-xs">
+                  {skill}
+                </Badge>
+              ))}
+            </div>
           )}
 
           <div className="flex flex-wrap gap-2">
@@ -131,4 +172,8 @@ export function StepPreview({ state, onAccessChange }: StepPreviewProps) {
       </div>
     </div>
   );
+}
+
+function hasSocialLinks(links: SocialLinks): boolean {
+  return !!(links.linkedin || links.twitter || links.github || links.website);
 }
