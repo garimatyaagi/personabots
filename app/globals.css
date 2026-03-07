@@ -92,4 +92,53 @@
       transparent 70%
     );
   }
+
+  /* Interactive press effect */
+  .press-effect {
+    transition: transform 0.15s ease-out;
+  }
+  .press-effect:active {
+    transform: scale(0.97);
+  }
+
+  /* Focus ring */
+  .focus-ring {
+    outline: none;
+  }
+  .focus-ring:focus-visible {
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+    border-radius: inherit;
+  }
+
+  /* Smooth card lift on hover */
+  .card-hover {
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(24, 23, 23, 0.08);
+  }
+
+  /* Unsaved changes indicator pulse */
+  .unsaved-dot {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  /* Page enter animation */
+  .page-enter {
+    animation: page-enter 0.35s ease-out;
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .press-effect:active {
+      transform: none;
+    }
+    .card-hover:hover {
+      transform: none;
+    }
+    .page-enter {
+      animation: none;
+    }
+  }
 }

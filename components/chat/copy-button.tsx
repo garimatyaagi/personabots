@@ -23,7 +23,7 @@ export function CopyButton({ text }: CopyButtonProps) {
   return (
     <button
       onClick={handleCopy}
-      className="flex h-6 w-6 items-center justify-center rounded-md text-muted-fg/50 transition-all hover:bg-[rgba(24,23,23,0.06)] hover:text-muted-fg"
+      className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/80 backdrop-blur-sm border border-border/50 text-muted-fg/60 shadow-sm transition-all hover:bg-white hover:text-muted-fg hover:shadow-md press-effect"
       title="Copy message"
     >
       {copied ? (

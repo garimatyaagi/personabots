@@ -20,9 +20,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           id={id}
           className={cn(
             "h-10 w-full rounded-xl border border-border bg-input-bg px-3 text-sm text-text",
-            "placeholder:text-muted-fg",
+            "placeholder:text-muted-fg/60",
             "transition-all duration-200",
-            "focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent",
+            "focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent/50 focus:bg-white",
             "disabled:cursor-not-allowed disabled:opacity-50",
             error && "border-primary ring-1 ring-primary/20",
             className

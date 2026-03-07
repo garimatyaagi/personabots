@@ -10,8 +10,8 @@ import {
   ExternalLink,
   Settings,
   MessageSquare,
-  Share2,
   Check,
+  Copy,
 } from "lucide-react";
 import type { BotWithUseCase } from "@/types";
 
@@ -33,68 +33,79 @@ export function BotCard({ bot }: BotCardProps) {
   }
 
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-4">
+    <Card className="card-hover group">
+      <CardContent className="flex flex-col gap-3">
+        {/* Header row */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <Avatar name={bot.name} src={bot.avatar_url} size="md" />
+            <div className="relative">
+              <Avatar name={bot.name} src={bot.avatar_url} size="md" />
+              {isPublic && (
+                <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-500 ring-2 ring-white" />
+              )}
+            </div>
             <div>
-              <h3 className="font-semibold">{bot.name}</h3>
+              <h3 className="font-semibold leading-tight">{bot.name}</h3>
               <p className="text-xs text-muted-fg">/b/{bot.slug}</p>
             </div>
           </div>
           <Badge variant={isPublic ? "default" : "muted"}>
-            {shareLink?.access || "private"}
+            {isPublic ? "Live" : "Private"}
           </Badge>
         </div>
 
+        {/* Description */}
         {bot.description && (
-          <p className="text-sm text-muted-fg line-clamp-2">
+          <p className="text-sm text-muted-fg line-clamp-2 leading-relaxed">
             {bot.description}
           </p>
         )}
 
+        {/* Tags row */}
         {useCase && (
-          <Badge variant="outline" className="w-fit capitalize">
-            {useCase.type}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="capitalize text-xs">
+              {useCase.type}
+            </Badge>
+          </div>
         )}
 
-        <div className="flex gap-2 pt-1">
-          {/* Share button — prominent first */}
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 pt-2 border-t border-border/50">
           {isPublic && (
             <Button
-              variant="primary"
+              variant="ghost"
               size="sm"
-              className="gap-1.5"
+              className="gap-1.5 text-xs press-effect"
               onClick={handleShare}
             >
               {copied ? (
-                <Check className="h-3.5 w-3.5" strokeWidth={1.75} />
+                <Check className="h-3 w-3 text-green-600" strokeWidth={2} />
               ) : (
-                <Share2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                <Copy className="h-3 w-3" strokeWidth={1.75} />
               )}
-              {copied ? "Copied!" : "Share"}
+              {copied ? "Copied!" : "Copy link"}
             </Button>
           )}
           {isPublic && (
             <Link href={`/b/${bot.slug}`} target="_blank">
-              <Button variant="secondary" size="sm" className="gap-1.5">
-                <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.75} />
-                View
+              <Button variant="ghost" size="sm" className="gap-1.5 text-xs press-effect">
+                <ExternalLink className="h-3 w-3" strokeWidth={1.75} />
+                Preview
               </Button>
             </Link>
           )}
-          <Link href={`/bot/${bot.id}`}>
-            <Button variant="ghost" size="sm" className="gap-1.5">
-              <Settings className="h-3.5 w-3.5" strokeWidth={1.75} />
-              Settings
+          <div className="flex-1" />
+          <Link href={`/bot/${bot.id}/conversations`}>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs press-effect">
+              <MessageSquare className="h-3 w-3" strokeWidth={1.75} />
+              Chats
             </Button>
           </Link>
-          <Link href={`/bot/${bot.id}/conversations`}>
-            <Button variant="ghost" size="sm" className="gap-1.5">
-              <MessageSquare className="h-3.5 w-3.5" strokeWidth={1.75} />
-              Chats
+          <Link href={`/bot/${bot.id}`}>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs press-effect">
+              <Settings className="h-3 w-3" strokeWidth={1.75} />
+              Edit
             </Button>
           </Link>
         </div>

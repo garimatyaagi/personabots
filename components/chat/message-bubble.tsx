@@ -48,7 +48,8 @@ export function MessageBubble({ message, botName, botAvatarUrl }: MessageBubbleP
           ) : (
             <>
               <MarkdownContent content={message.content} />
-              <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {/* Copy button: visible on mobile, hover-reveal on desktop */}
+              <div className="absolute -top-1 -right-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                 <CopyButton text={message.content} />
               </div>
             </>

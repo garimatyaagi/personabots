@@ -73,12 +73,25 @@ const config: Config = {
           "50%": { transform: "translateY(-8px)" },
         },
         shimmer: {
-          "0%": { backgroundPosition: "-200% 0" },
-          "100%": { backgroundPosition: "200% 0" },
+          "0%": { backgroundPosition: "200% 0" },
+          "100%": { backgroundPosition: "-200% 0" },
         },
         "draw-line": {
           "0%": { width: "0%" },
           "100%": { width: "100%" },
+        },
+        "scale-press": {
+          "0%": { transform: "scale(1)" },
+          "50%": { transform: "scale(0.97)" },
+          "100%": { transform: "scale(1)" },
+        },
+        "slide-in-right": {
+          "0%": { opacity: "0", transform: "translateX(16px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        "page-enter": {
+          "0%": { opacity: "0", transform: "translateY(6px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
       },
       animation: {
@@ -88,8 +101,11 @@ const config: Config = {
         "message-appear": "message-appear 0.5s ease-out forwards",
         "typing-dot": "typing-dot 1.2s ease-in-out infinite",
         float: "float 4s ease-in-out infinite",
-        shimmer: "shimmer 3s linear infinite",
+        shimmer: "shimmer 1.8s ease-in-out infinite",
         "draw-line": "draw-line 0.8s ease-out forwards",
+        "scale-press": "scale-press 0.15s ease-out",
+        "slide-in-right": "slide-in-right 0.3s ease-out",
+        "page-enter": "page-enter 0.35s ease-out",
       },
     },
   },

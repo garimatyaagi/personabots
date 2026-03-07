@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Navbar } from "@/components/shared/navbar";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Toggle } from "@/components/ui/toggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loading } from "@/components/shared/loading";
+import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/toast";
 import { SkillsInput } from "@/components/bot-builder/skills-input";
 import { CustomLinksInput } from "@/components/bot-builder/custom-links-input";
 import { HighlightsInput } from "@/components/bot-builder/highlights-input";
@@ -33,12 +34,14 @@ export default function BotSettingsPage() {
   const params = useParams();
   const router = useRouter();
   const botId = params.botId as string;
+  const { toast } = useToast();
 
   const [bot, setBot] = useState<Bot | null>(null);
   const [memoryItems, setMemoryItems] = useState<MemoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Editable fields
   const [name, setName] = useState("");
@@ -52,6 +55,31 @@ export default function BotSettingsPage() {
   const [highlights, setHighlights] = useState<string[]>([]);
   const [theme, setTheme] = useState<BotTheme>("default");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  // Track original values to detect changes
+  const [originalValues, setOriginalValues] = useState<string>("");
+
+  const getCurrentValues = useCallback(() => {
+    return JSON.stringify({
+      name,
+      description,
+      tone,
+      isPublic,
+      headline,
+      about,
+      skills,
+      customLinks,
+      highlights,
+      theme,
+      avatarUrl,
+    });
+  }, [name, description, tone, isPublic, headline, about, skills, customLinks, highlights, theme, avatarUrl]);
+
+  useEffect(() => {
+    if (originalValues) {
+      setHasUnsavedChanges(getCurrentValues() !== originalValues);
+    }
+  }, [getCurrentValues, originalValues]);
 
   useEffect(() => {
     async function load() {
@@ -82,21 +110,42 @@ export default function BotSettingsPage() {
           } else {
             setCustomLinks(cl);
           }
+
+          // Set original values after a tick (to let state settle)
+          setTimeout(() => {
+            const vals = JSON.stringify({
+              name: botData.bot.name,
+              description: botData.bot.description || "",
+              tone: botData.bot.tone,
+              isPublic: botData.bot.is_public,
+              headline: botData.bot.headline || "",
+              about: botData.bot.about || "",
+              skills: botData.bot.skills || [],
+              customLinks: cl.length === 0 && botData.bot.social_links
+                ? migrateSocialLinksToCustomLinks(botData.bot.social_links)
+                : cl,
+              highlights: botData.bot.highlights || [],
+              theme: botData.bot.theme || "default",
+              avatarUrl: botData.bot.avatar_url || null,
+            });
+            setOriginalValues(vals);
+          }, 100);
         }
         setMemoryItems(memData.items || []);
       } catch (error) {
         console.error("Failed to load bot:", error);
+        toast("Failed to load bot settings", "error");
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, [botId]);
+  }, [botId, toast]);
 
   async function handleSave() {
     setSaving(true);
     try {
-      await fetch(`/api/bots/${botId}`, {
+      const res = await fetch(`/api/bots/${botId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -113,6 +162,15 @@ export default function BotSettingsPage() {
           avatar_url: avatarUrl,
         }),
       });
+      if (res.ok) {
+        toast("Changes saved successfully");
+        setOriginalValues(getCurrentValues());
+        setHasUnsavedChanges(false);
+      } else {
+        toast("Failed to save changes", "error");
+      }
+    } catch {
+      toast("Failed to save changes", "error");
     } finally {
       setSaving(false);
     }
@@ -121,12 +179,14 @@ export default function BotSettingsPage() {
   async function handleDelete() {
     if (!confirm("Are you sure you want to delete this bot?")) return;
     await fetch(`/api/bots/${botId}`, { method: "DELETE" });
+    toast("Bot deleted", "info");
     router.push("/dashboard");
   }
 
   async function handleDeleteMemory(itemId: string) {
     await fetch(`/api/memory/${itemId}`, { method: "DELETE" });
     setMemoryItems((prev) => prev.filter((m) => m.id !== itemId));
+    toast("Memory item removed");
   }
 
   async function toggleShareable(itemId: string, current: boolean) {
@@ -140,12 +200,14 @@ export default function BotSettingsPage() {
         m.id === itemId ? { ...m, is_shareable: !current } : m
       )
     );
+    toast(!current ? "Item now visible to visitors" : "Item hidden from visitors");
   }
 
   function copyLink() {
     const url = `${window.location.origin}/b/${bot?.slug}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
+    toast("Bot link copied to clipboard");
     setTimeout(() => setCopied(false), 2000);
   }
 
@@ -154,7 +216,7 @@ export default function BotSettingsPage() {
       <div className="min-h-screen bg-bg">
         <Navbar />
         <main className="mx-auto max-w-3xl px-4 py-8">
-          <Loading />
+          <SettingsSkeleton />
         </main>
       </div>
     );
@@ -165,7 +227,12 @@ export default function BotSettingsPage() {
       <div className="min-h-screen bg-bg">
         <Navbar />
         <main className="mx-auto max-w-3xl px-4 py-8">
-          <p>Bot not found.</p>
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <p className="text-muted-fg">Bot not found.</p>
+            <Button variant="secondary" onClick={() => router.push("/dashboard")} className="press-effect">
+              Back to dashboard
+            </Button>
+          </div>
         </main>
       </div>
     );
@@ -176,13 +243,21 @@ export default function BotSettingsPage() {
   return (
     <div className="min-h-screen bg-bg">
       <Navbar />
-      <main className="mx-auto max-w-3xl px-4 py-8">
+      <main className="mx-auto max-w-3xl px-4 py-8 page-enter">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold tracking-heading">
-            Settings
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold tracking-heading">
+              Settings
+            </h1>
+            {hasUnsavedChanges && (
+              <span className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 unsaved-dot" />
+                Unsaved
+              </span>
+            )}
+          </div>
           <div className="flex gap-2">
-            <Button variant="secondary" onClick={copyLink} className="gap-1.5">
+            <Button variant="secondary" onClick={copyLink} className="gap-1.5 press-effect">
               {copied ? (
                 <Check className="h-3.5 w-3.5" strokeWidth={1.75} />
               ) : (
@@ -191,7 +266,7 @@ export default function BotSettingsPage() {
               {copied ? "Copied" : "Copy link"}
             </Button>
             <a href={`/b/${bot.slug}`} target="_blank">
-              <Button variant="secondary" className="gap-1.5">
+              <Button variant="secondary" className="gap-1.5 press-effect">
                 <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.75} />
                 Preview
               </Button>
@@ -286,8 +361,8 @@ export default function BotSettingsPage() {
               <div className="rounded-xl border border-border bg-accent/20 p-3">
                 <p className="text-sm font-mono text-text break-all">{botUrl}</p>
               </div>
-              <div className="flex gap-2">
-                <Button variant="primary" size="sm" onClick={copyLink} className="gap-1.5">
+              <div className="flex flex-wrap gap-2">
+                <Button variant="primary" size="sm" onClick={copyLink} className="gap-1.5 press-effect">
                   {copied ? (
                     <Check className="h-3.5 w-3.5" strokeWidth={1.75} />
                   ) : (
@@ -300,7 +375,7 @@ export default function BotSettingsPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Button variant="ghost" size="sm" className="gap-1.5">
+                  <Button variant="ghost" size="sm" className="gap-1.5 press-effect">
                     <Twitter className="h-3.5 w-3.5" strokeWidth={1.75} />
                     Twitter
                   </Button>
@@ -310,7 +385,7 @@ export default function BotSettingsPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Button variant="ghost" size="sm" className="gap-1.5">
+                  <Button variant="ghost" size="sm" className="gap-1.5 press-effect">
                     <Linkedin className="h-3.5 w-3.5" strokeWidth={1.75} />
                     LinkedIn
                   </Button>
@@ -319,11 +394,18 @@ export default function BotSettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Save button */}
-          <Button onClick={handleSave} isLoading={saving} className="w-fit gap-2">
-            <Save className="h-4 w-4" strokeWidth={1.75} />
-            Save changes
-          </Button>
+          {/* Save button - sticky on mobile */}
+          <div className="sticky bottom-4 z-10">
+            <Button
+              onClick={handleSave}
+              isLoading={saving}
+              className="w-full sm:w-fit gap-2 press-effect shadow-lg"
+              disabled={!hasUnsavedChanges && !saving}
+            >
+              <Save className="h-4 w-4" strokeWidth={1.75} />
+              {saving ? "Saving..." : hasUnsavedChanges ? "Save changes" : "Saved"}
+            </Button>
+          </div>
 
           {/* Memory */}
           <Card>
@@ -332,13 +414,18 @@ export default function BotSettingsPage() {
             </CardHeader>
             <CardContent>
               {memoryItems.length === 0 ? (
-                <p className="text-sm text-muted-fg">No memory items yet.</p>
+                <div className="flex flex-col items-center gap-2 py-6 text-center">
+                  <FileText className="h-8 w-8 text-muted-fg/30" strokeWidth={1.5} />
+                  <p className="text-sm text-muted-fg">
+                    No memory items yet. Upload documents when creating your bot.
+                  </p>
+                </div>
               ) : (
                 <div className="flex flex-col gap-2">
                   {memoryItems.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-center gap-3 rounded-xl border border-border p-3"
+                      className="flex items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:bg-accent/10"
                     >
                       <FileText
                         className="h-4 w-4 shrink-0 text-muted-fg"
@@ -381,7 +468,7 @@ export default function BotSettingsPage() {
               <CardTitle className="text-primary">Danger zone</CardTitle>
             </CardHeader>
             <CardContent>
-              <Button variant="danger" onClick={handleDelete} className="gap-2">
+              <Button variant="danger" onClick={handleDelete} className="gap-2 press-effect">
                 <Trash2 className="h-4 w-4" strokeWidth={1.75} />
                 Delete bot
               </Button>
@@ -389,6 +476,30 @@ export default function BotSettingsPage() {
           </Card>
         </div>
       </main>
+    </div>
+  );
+}
+
+function SettingsSkeleton() {
+  return (
+    <div className="flex flex-col gap-6 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-8 w-32" />
+        <div className="flex gap-2">
+          <Skeleton className="h-10 w-24 rounded-xl" />
+          <Skeleton className="h-10 w-24 rounded-xl" />
+        </div>
+      </div>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="rounded-xl border border-border bg-white/60 p-5">
+          <Skeleton className="h-5 w-24 mb-4" />
+          <div className="space-y-3">
+            <Skeleton className="h-10 w-full rounded-xl" />
+            <Skeleton className="h-10 w-full rounded-xl" />
+            <SkeletonText lines={2} />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
