@@ -10,12 +10,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Personal — AI that sounds like you",
+  title: "Personal — Let recruiters chat with your resume",
   description:
-    "Build your personal AI for hiring, networking, investor outreach, and more. Powered by your memory, voice, and style.",
+    "Upload your resume, get a personal AI bot, and share the link. Recruiters and anyone can chat with your bot about your work, skills, and experience.",
   openGraph: {
-    title: "Personal",
-    description: "AI that sounds like you",
+    title: "Personal — Let recruiters chat with your resume",
+    description:
+      "Upload your resume. Get an AI bot. Share the link. Anyone can now chat with your experience.",
     type: "website",
   },
 };
