@@ -93,6 +93,22 @@ const config: Config = {
           "0%": { opacity: "0", transform: "translateY(6px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "step-slide-left": {
+          "0%": { opacity: "0", transform: "translateX(16px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        "step-slide-right": {
+          "0%": { opacity: "0", transform: "translateX(-16px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        "scale-in": {
+          "0%": { opacity: "0", transform: "scale(0.95)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "progress-fill": {
+          "0%": { width: "0%" },
+          "100%": { width: "var(--progress-width)" },
+        },
       },
       animation: {
         "fade-in": "fade-in 0.3s ease-out",
@@ -106,6 +122,9 @@ const config: Config = {
         "scale-press": "scale-press 0.15s ease-out",
         "slide-in-right": "slide-in-right 0.3s ease-out",
         "page-enter": "page-enter 0.35s ease-out",
+        "step-slide-left": "step-slide-left 0.25s ease-out",
+        "step-slide-right": "step-slide-right 0.25s ease-out",
+        "scale-in": "scale-in 0.3s ease-out",
       },
     },
   },

@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { BotCompleteness } from "@/components/dashboard/bot-completeness";
 import {
   ExternalLink,
   Settings,
@@ -49,9 +50,12 @@ export function BotCard({ bot }: BotCardProps) {
               <p className="text-xs text-muted-fg">/b/{bot.slug}</p>
             </div>
           </div>
-          <Badge variant={isPublic ? "default" : "muted"}>
-            {isPublic ? "Live" : "Private"}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <BotCompleteness bot={bot} size="sm" />
+            <Badge variant={isPublic ? "default" : "muted"}>
+              {isPublic ? "Live" : "Private"}
+            </Badge>
+          </div>
         </div>
 
         {/* Description */}

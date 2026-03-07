@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChatMockup } from "./chat-mockup";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, Play, MessageSquare } from "lucide-react";
 
 export function Hero() {
   return (
@@ -39,22 +39,37 @@ export function Hero() {
               style={{ animationDelay: "200ms" }}
             >
               <Link href="/sign-up">
-                <Button size="lg" className="gap-2 text-base">
+                <Button size="lg" className="gap-2 text-base press-effect">
                   Get started free
                   <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
                 </Button>
               </Link>
               <Link href="#product-demo">
-                <Button variant="secondary" size="lg" className="gap-2 text-base">
+                <Button variant="secondary" size="lg" className="gap-2 text-base press-effect">
                   <Play className="h-3.5 w-3.5" strokeWidth={2} />
                   See it in action
                 </Button>
               </Link>
             </div>
 
+            {/* Live demo bot link */}
+            <div
+              className="mt-6 animate-fade-in"
+              style={{ animationDelay: "350ms" }}
+            >
+              <Link
+                href="/explore"
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-white/60 backdrop-blur-sm px-4 py-2 text-sm text-muted-fg hover:text-text hover:border-primary/30 hover:bg-white/80 transition-all press-effect group"
+              >
+                <MessageSquare className="h-3.5 w-3.5 text-primary" strokeWidth={1.75} />
+                <span>Try a live demo bot</span>
+                <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" strokeWidth={2} />
+              </Link>
+            </div>
+
             <p
               className="mt-4 text-sm text-muted-fg/70 animate-fade-in"
-              style={{ animationDelay: "300ms" }}
+              style={{ animationDelay: "400ms" }}
             >
               Starting at &#8377;99/month. Takes 2 minutes to set up.
             </p>

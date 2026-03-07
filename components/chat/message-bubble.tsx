@@ -43,7 +43,7 @@ export function MessageBubble({ message, botName, botAvatarUrl }: MessageBubbleP
           ) : message.isStreaming ? (
             <>
               <div className="whitespace-pre-wrap">{message.content}</div>
-              <span className="inline-block w-1.5 h-4 bg-current animate-pulse ml-0.5 -mb-0.5" />
+              <span className="inline-block w-[3px] h-[14px] bg-primary/60 rounded-full ml-0.5 -mb-0.5 animate-pulse" />
             </>
           ) : (
             <>

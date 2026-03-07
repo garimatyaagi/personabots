@@ -17,6 +17,7 @@ import { HighlightsInput } from "@/components/bot-builder/highlights-input";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { ThemeSelector } from "@/components/ui/theme-selector";
 import { migrateSocialLinksToCustomLinks } from "@/lib/utils/migrate-links";
+import { QRCode } from "@/components/ui/qr-code";
 import {
   Save,
   Trash2,
@@ -27,6 +28,7 @@ import {
   Share2,
   Twitter,
   Linkedin,
+  QrCode,
 } from "lucide-react";
 import type { Bot, MemoryItem, CustomLink, BotTheme } from "@/types";
 
@@ -390,6 +392,17 @@ export default function BotSettingsPage() {
                     LinkedIn
                   </Button>
                 </a>
+              </div>
+
+              {/* QR Code */}
+              <div className="mt-2 pt-3 border-t border-border/50">
+                <div className="flex items-center gap-2 mb-3">
+                  <QrCode className="h-4 w-4 text-muted-fg" strokeWidth={1.75} />
+                  <span className="text-sm font-medium text-muted-fg">QR Code</span>
+                </div>
+                <div className="flex justify-center">
+                  <QRCode url={botUrl} label={bot.slug} size={140} />
+                </div>
               </div>
             </CardContent>
           </Card>

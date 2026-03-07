@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { BotCard } from "@/components/dashboard/bot-card";
 import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
 import { StatsBar } from "@/components/dashboard/stats-bar";
+import { OnboardingModal } from "@/components/shared/onboarding-modal";
 import { useSubscription } from "@/lib/hooks/use-subscription";
 import { useUser } from "@clerk/nextjs";
 import {
@@ -18,10 +19,13 @@ import {
 } from "lucide-react";
 import type { BotWithUseCase } from "@/types";
 
+const ONBOARDING_KEY = "personal_onboarding_dismissed";
+
 export default function DashboardPage() {
   const [bots, setBots] = useState<BotWithUseCase[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalConversations, setTotalConversations] = useState(0);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const {
     isActive: subActive,
     loading: subLoading,
@@ -43,6 +47,15 @@ export default function DashboardPage() {
           0
         );
         setTotalConversations(convCount);
+
+        // Show onboarding for first-time users with no bots
+        if (
+          (data.bots || []).length === 0 &&
+          typeof window !== "undefined" &&
+          !localStorage.getItem(ONBOARDING_KEY)
+        ) {
+          setShowOnboarding(true);
+        }
       } catch (error) {
         console.error("Failed to fetch bots:", error);
       } finally {
@@ -61,8 +74,23 @@ export default function DashboardPage() {
   const greeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
+  function dismissOnboarding() {
+    setShowOnboarding(false);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(ONBOARDING_KEY, "true");
+    }
+  }
+
   return (
     <div className="page-enter">
+      {/* Onboarding modal for first-time users */}
+      {showOnboarding && isPaid && (
+        <OnboardingModal
+          firstName={firstName}
+          onDismiss={dismissOnboarding}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

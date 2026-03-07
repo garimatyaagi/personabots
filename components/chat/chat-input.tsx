@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Send } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -28,6 +28,13 @@ export function ChatInput({
     }
   }, [value]);
 
+  // Focus textarea on mount
+  useEffect(() => {
+    if (!disabled) {
+      textareaRef.current?.focus();
+    }
+  }, [disabled]);
+
   function handleSubmit() {
     const trimmed = value.trim();
     if (!trimmed || disabled) return;
@@ -43,7 +50,7 @@ export function ChatInput({
   }
 
   return (
-    <div className="flex items-end gap-2 rounded-xl border border-border bg-[var(--surface,rgba(255,255,255,0.6))] p-2">
+    <div className="flex items-end gap-2 rounded-xl border border-border bg-[var(--surface,rgba(255,255,255,0.6))] p-2 transition-all focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/20 focus-within:shadow-sm">
       <textarea
         ref={textareaRef}
         value={value}
@@ -52,15 +59,19 @@ export function ChatInput({
         placeholder={placeholder}
         disabled={disabled}
         rows={1}
-        className="flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-text placeholder:text-muted-fg focus:outline-none disabled:opacity-50"
+        className="flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-text placeholder:text-muted-fg/50 focus:outline-none disabled:opacity-50"
       />
       <Button
         size="icon"
         onClick={handleSubmit}
         disabled={!value.trim() || disabled}
-        className="h-8 w-8 shrink-0"
+        className="h-8 w-8 shrink-0 press-effect"
       >
-        <Send className="h-3.5 w-3.5" strokeWidth={1.75} />
+        {disabled ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.75} />
+        ) : (
+          <Send className="h-3.5 w-3.5" strokeWidth={1.75} />
+        )}
       </Button>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { StepBasics } from "./step-basics";
@@ -9,7 +9,7 @@ import { StepUseCase } from "./step-usecase";
 import { StepPreview } from "./step-preview";
 import { PublishSuccessModal } from "./publish-success-modal";
 import { cn } from "@/lib/utils/cn";
-import { ArrowLeft, ArrowRight, Rocket } from "lucide-react";
+import { ArrowLeft, ArrowRight, Rocket, Check } from "lucide-react";
 import type { BotBuilderState, AccessLevel } from "@/types";
 
 const STEPS = ["Basics", "Memory", "Use Case", "Preview"];
@@ -54,6 +54,11 @@ export function BotBuilderWizard() {
     slug: string;
   } | null>(null);
 
+  // Step transition animation state
+  const [slideDirection, setSlideDirection] = useState<"left" | "right">("left");
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+
   function updateBasics(updates: Partial<BotBuilderState["basics"]>) {
     setState((s) => ({
       ...s,
@@ -79,17 +84,40 @@ export function BotBuilderWizard() {
     setState((s) => ({ ...s, access }));
   }
 
+  function animateStep(newStep: number) {
+    const direction = newStep > state.step ? "left" : "right";
+    setSlideDirection(direction);
+    setIsTransitioning(true);
+
+    // After exit animation, change step and enter
+    setTimeout(() => {
+      setState((s) => ({ ...s, step: newStep as 1 | 2 | 3 | 4 }));
+      setIsTransitioning(false);
+    }, 180);
+  }
+
   function goNext() {
     if (state.step < 4) {
-      setState((s) => ({ ...s, step: (s.step + 1) as 1 | 2 | 3 | 4 }));
+      animateStep(state.step + 1);
     }
   }
 
   function goBack() {
     if (state.step > 1) {
-      setState((s) => ({ ...s, step: (s.step - 1) as 1 | 2 | 3 | 4 }));
+      animateStep(state.step - 1);
     }
   }
+
+  function goToStep(step: number) {
+    if (step !== state.step) {
+      animateStep(step);
+    }
+  }
+
+  // Scroll to top of step content on step change
+  useEffect(() => {
+    contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [state.step]);
 
   async function handlePublish() {
     if (!state.basics.name || !state.basics.slug) {
@@ -224,8 +252,11 @@ export function BotBuilderWizard() {
       ? state.basics.name.trim() && state.basics.slug.trim()
       : true;
 
+  // Calculate overall progress for the progress bar
+  const progressPercent = (state.step / STEPS.length) * 100;
+
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-2xl" ref={contentRef}>
       {/* Success modal */}
       {publishedBot && (
         <PublishSuccessModal
@@ -235,44 +266,70 @@ export function BotBuilderWizard() {
         />
       )}
 
-      {/* Step indicator */}
-      <div className="mb-8 flex items-center justify-center gap-2">
-        {STEPS.map((label, i) => (
-          <div key={label} className="flex items-center gap-2">
-            <button
-              onClick={() =>
-                setState((s) => ({ ...s, step: (i + 1) as 1 | 2 | 3 | 4 }))
-              }
-              className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-all",
-                state.step === i + 1
-                  ? "bg-primary text-[#f8faed]"
-                  : state.step > i + 1
-                    ? "bg-accent text-text"
-                    : "bg-[rgba(24,23,23,0.08)] text-muted-fg"
+      {/* Step indicator with progress bar */}
+      <div className="mb-8">
+        {/* Progress bar */}
+        <div className="h-1 w-full rounded-full bg-border/30 mb-6 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+
+        <div className="flex items-center justify-center gap-2">
+          {STEPS.map((label, i) => (
+            <div key={label} className="flex items-center gap-2">
+              <button
+                onClick={() => goToStep(i + 1)}
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-all duration-300",
+                  state.step === i + 1
+                    ? "bg-primary text-[#f8faed] shadow-sm scale-110"
+                    : state.step > i + 1
+                      ? "bg-green-100 text-green-700"
+                      : "bg-[rgba(24,23,23,0.08)] text-muted-fg"
+                )}
+              >
+                {state.step > i + 1 ? (
+                  <Check className="h-4 w-4" strokeWidth={2} />
+                ) : (
+                  i + 1
+                )}
+              </button>
+              <span
+                className={cn(
+                  "hidden text-sm sm:inline transition-colors",
+                  state.step === i + 1
+                    ? "font-medium text-text"
+                    : "text-muted-fg"
+                )}
+              >
+                {label}
+              </span>
+              {i < STEPS.length - 1 && (
+                <div
+                  className={cn(
+                    "h-px w-6 sm:w-10 transition-colors duration-300",
+                    state.step > i + 1 ? "bg-green-300" : "bg-border"
+                  )}
+                />
               )}
-            >
-              {i + 1}
-            </button>
-            <span
-              className={cn(
-                "hidden text-sm sm:inline",
-                state.step === i + 1
-                  ? "font-medium"
-                  : "text-muted-fg"
-              )}
-            >
-              {label}
-            </span>
-            {i < STEPS.length - 1 && (
-              <div className="h-px w-6 bg-border sm:w-10" />
-            )}
-          </div>
-        ))}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Step content */}
-      <div className="animate-fade-in">
+      {/* Step content with transition */}
+      <div
+        className={cn(
+          "transition-all duration-200 ease-out",
+          isTransitioning
+            ? slideDirection === "left"
+              ? "opacity-0 -translate-x-4"
+              : "opacity-0 translate-x-4"
+            : "opacity-100 translate-x-0"
+        )}
+      >
         {state.step === 1 && (
           <StepBasics state={state} onChange={updateBasics} />
         )}
@@ -289,7 +346,7 @@ export function BotBuilderWizard() {
 
       {/* Error */}
       {error && (
-        <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm text-primary">
+        <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm text-primary animate-fade-in">
           {error}
         </div>
       )}
@@ -300,14 +357,18 @@ export function BotBuilderWizard() {
           variant="ghost"
           onClick={goBack}
           disabled={state.step === 1}
-          className="gap-2"
+          className="gap-2 press-effect"
         >
           <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
           Back
         </Button>
 
         {state.step < 4 ? (
-          <Button onClick={goNext} disabled={!canProceed} className="gap-2">
+          <Button
+            onClick={goNext}
+            disabled={!canProceed}
+            className="gap-2 press-effect"
+          >
             Next
             <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
           </Button>
@@ -315,7 +376,7 @@ export function BotBuilderWizard() {
           <Button
             onClick={handlePublish}
             isLoading={publishing}
-            className="gap-2"
+            className="gap-2 press-effect"
           >
             <Rocket className="h-4 w-4" strokeWidth={1.75} />
             Publish Bot

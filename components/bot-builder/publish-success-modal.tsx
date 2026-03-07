@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { QRCode } from "@/components/ui/qr-code";
 import {
   Check,
   Copy,
@@ -8,6 +9,7 @@ import {
   Twitter,
   Linkedin,
   X,
+  PartyPopper,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -23,6 +25,7 @@ export function PublishSuccessModal({
   onClose,
 }: PublishSuccessModalProps) {
   const [copied, setCopied] = useState(false);
+  const [showQR, setShowQR] = useState(false);
   const botUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/b/${botSlug}`;
 
   function copyLink() {
@@ -57,11 +60,15 @@ export function PublishSuccessModal({
         {/* Content */}
         <div className="flex flex-col items-center text-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-            <Check className="h-7 w-7 text-green-600" strokeWidth={2} />
+            {showQR ? (
+              <PartyPopper className="h-7 w-7 text-green-600" strokeWidth={1.75} />
+            ) : (
+              <Check className="h-7 w-7 text-green-600" strokeWidth={2} />
+            )}
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold">Your bot is live! 🎉</h2>
+            <h2 className="text-xl font-semibold">Your bot is live!</h2>
             <p className="mt-1 text-sm text-muted-fg">
               Share {botName} with the world
             </p>
@@ -77,7 +84,7 @@ export function PublishSuccessModal({
             <Button
               onClick={copyLink}
               variant="secondary"
-              className="flex-1 gap-1.5"
+              className="flex-1 gap-1.5 press-effect"
             >
               {copied ? (
                 <Check className="h-3.5 w-3.5" strokeWidth={1.75} />
@@ -87,12 +94,26 @@ export function PublishSuccessModal({
               {copied ? "Copied!" : "Copy Link"}
             </Button>
             <a href={botUrl} target="_blank" className="flex-1">
-              <Button variant="primary" className="w-full gap-1.5">
+              <Button variant="primary" className="w-full gap-1.5 press-effect">
                 <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.75} />
                 View Bot
               </Button>
             </a>
           </div>
+
+          {/* QR Code toggle */}
+          {showQR ? (
+            <div className="w-full rounded-xl border border-border bg-accent/10 p-4 animate-fade-in">
+              <QRCode url={botUrl} label={botSlug} size={140} />
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowQR(true)}
+              className="text-xs text-muted-fg hover:text-text transition-colors underline underline-offset-2"
+            >
+              Show QR code for sharing
+            </button>
+          )}
 
           {/* Social sharing */}
           <div className="flex items-center gap-3 pt-2">
@@ -101,7 +122,7 @@ export function PublishSuccessModal({
               href={twitterUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/50 text-text hover:bg-accent transition-all"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/50 text-text hover:bg-accent transition-all press-effect"
             >
               <Twitter className="h-4 w-4" strokeWidth={1.75} />
             </a>
@@ -109,14 +130,14 @@ export function PublishSuccessModal({
               href={linkedinUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/50 text-text hover:bg-accent transition-all"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/50 text-text hover:bg-accent transition-all press-effect"
             >
               <Linkedin className="h-4 w-4" strokeWidth={1.75} />
             </a>
           </div>
 
           {/* Dashboard button */}
-          <Button variant="ghost" onClick={onClose} className="mt-2">
+          <Button variant="ghost" onClick={onClose} className="mt-2 press-effect">
             Go to Dashboard
           </Button>
         </div>
