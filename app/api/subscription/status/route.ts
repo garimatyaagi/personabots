@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { getActiveSubscription, isSubscriptionValid } from "@/lib/subscription";
+import {
+  getActiveSubscription,
+  isSubscriptionValid,
+  recoverSubscriptionIfPaid,
+} from "@/lib/subscription";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +15,19 @@ export async function GET() {
   }
 
   try {
-    const subscription = await getActiveSubscription(userId);
-    const isActive = isSubscriptionValid(subscription);
+    // 1. Check for an already-active subscription in the DB
+    let subscription = await getActiveSubscription(userId);
+    let isActive = isSubscriptionValid(subscription);
+
+    // 2. If nothing active in DB, check if there's a "created" sub that Razorpay
+    //    has actually activated (webhook may have failed or not arrived yet).
+    if (!isActive) {
+      const recovered = await recoverSubscriptionIfPaid(userId);
+      if (recovered) {
+        subscription = recovered;
+        isActive = isSubscriptionValid(recovered);
+      }
+    }
 
     return NextResponse.json({
       isActive,
@@ -24,7 +39,15 @@ export async function GET() {
           }
         : null,
     });
-  } catch {
-    return NextResponse.json({ isActive: false, subscription: null });
+  } catch (error) {
+    console.error(
+      "Subscription status error:",
+      error instanceof Error ? error.message : error
+    );
+    // Return 500 so the hook recognises this as an error (not "not subscribed")
+    return NextResponse.json(
+      { error: "Failed to check subscription status" },
+      { status: 500 }
+    );
   }
 }

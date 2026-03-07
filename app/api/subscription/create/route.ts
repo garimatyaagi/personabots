@@ -22,7 +22,7 @@ export async function POST() {
       .in("status", ["active", "authenticated"])
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       return NextResponse.json({
