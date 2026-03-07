@@ -39,6 +39,12 @@ const socialLinksSchema = z.object({
   website: z.string().max(500).optional().or(z.literal("")),
 });
 
+const customLinkSchema = z.object({
+  label: z.string().max(100),
+  url: z.string().max(500),
+  icon: z.string().max(50).optional(),
+});
+
 const updateBotSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
@@ -48,6 +54,10 @@ const updateBotSchema = z.object({
   social_links: socialLinksSchema.optional(),
   skills: z.array(z.string().max(50)).max(20).optional(),
   about: z.string().max(2000).optional().nullable(),
+  avatar_url: z.string().max(500).optional().nullable(),
+  theme: z.enum(["default", "ocean", "forest", "sunset", "midnight", "lavender", "rose"]).optional(),
+  custom_links: z.array(customLinkSchema).max(10).optional(),
+  highlights: z.array(z.string().max(200)).max(10).optional(),
   is_public: z.boolean().optional(),
 });
 

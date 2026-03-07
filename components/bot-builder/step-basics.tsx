@@ -5,7 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Toggle } from "@/components/ui/toggle";
 import { SkillsInput } from "@/components/bot-builder/skills-input";
-import { SocialLinksInput } from "@/components/bot-builder/social-links-input";
+import { CustomLinksInput } from "@/components/bot-builder/custom-links-input";
+import { HighlightsInput } from "@/components/bot-builder/highlights-input";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
+import { ThemeSelector } from "@/components/ui/theme-selector";
 import type { BotBuilderState } from "@/types";
 
 interface StepBasicsProps {
@@ -43,6 +46,12 @@ export function StepBasics({ state, onChange }: StepBasicsProps) {
           Give your bot a name, personality, and voice.
         </p>
       </div>
+
+      {/* Avatar upload */}
+      <AvatarUpload
+        name={basics.name || "Bot"}
+        onFileSelect={(file) => onChange({ avatar_file: file })}
+      />
 
       <Input
         id="bot-name"
@@ -136,9 +145,19 @@ export function StepBasics({ state, onChange }: StepBasicsProps) {
         onChange={(skills) => onChange({ skills })}
       />
 
-      <SocialLinksInput
-        links={basics.social_links}
-        onChange={(social_links) => onChange({ social_links })}
+      <HighlightsInput
+        highlights={basics.highlights}
+        onChange={(highlights) => onChange({ highlights })}
+      />
+
+      <CustomLinksInput
+        links={basics.custom_links}
+        onChange={(custom_links) => onChange({ custom_links })}
+      />
+
+      <ThemeSelector
+        value={basics.theme}
+        onChange={(theme) => onChange({ theme })}
       />
     </div>
   );

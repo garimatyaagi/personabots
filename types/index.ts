@@ -17,6 +17,21 @@ export type MemorySourceType =
 export type AccessLevel = "public" | "unlisted" | "private";
 export type MessageRole = "system" | "user" | "assistant";
 
+export interface CustomLink {
+  label: string;
+  url: string;
+  icon?: string;
+}
+
+export type BotTheme =
+  | "default"
+  | "ocean"
+  | "forest"
+  | "sunset"
+  | "midnight"
+  | "lavender"
+  | "rose";
+
 export interface User {
   id: string;
   email: string;
@@ -46,6 +61,9 @@ export interface Bot {
   social_links: SocialLinks;
   skills: string[];
   about: string | null;
+  theme: BotTheme;
+  custom_links: CustomLink[];
+  highlights: string[];
   is_public: boolean;
   created_at: string;
   updated_at: string;
@@ -150,6 +168,10 @@ export interface BotBuilderState {
     social_links: SocialLinks;
     skills: string[];
     about: string;
+    avatar_file: File | null;
+    theme: BotTheme;
+    custom_links: CustomLink[];
+    highlights: string[];
   };
   memory: {
     uploads: File[];

@@ -11,7 +11,11 @@ import { Toggle } from "@/components/ui/toggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loading } from "@/components/shared/loading";
 import { SkillsInput } from "@/components/bot-builder/skills-input";
-import { SocialLinksInput } from "@/components/bot-builder/social-links-input";
+import { CustomLinksInput } from "@/components/bot-builder/custom-links-input";
+import { HighlightsInput } from "@/components/bot-builder/highlights-input";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
+import { ThemeSelector } from "@/components/ui/theme-selector";
+import { migrateSocialLinksToCustomLinks } from "@/lib/utils/migrate-links";
 import {
   Save,
   Trash2,
@@ -19,8 +23,11 @@ import {
   Copy,
   Check,
   FileText,
+  Share2,
+  Twitter,
+  Linkedin,
 } from "lucide-react";
-import type { Bot, MemoryItem, SocialLinks } from "@/types";
+import type { Bot, MemoryItem, CustomLink, BotTheme } from "@/types";
 
 export default function BotSettingsPage() {
   const params = useParams();
@@ -40,8 +47,11 @@ export default function BotSettingsPage() {
   const [isPublic, setIsPublic] = useState(false);
   const [headline, setHeadline] = useState("");
   const [about, setAbout] = useState("");
-  const [socialLinks, setSocialLinks] = useState<SocialLinks>({});
   const [skills, setSkills] = useState<string[]>([]);
+  const [customLinks, setCustomLinks] = useState<CustomLink[]>([]);
+  const [highlights, setHighlights] = useState<string[]>([]);
+  const [theme, setTheme] = useState<BotTheme>("default");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -61,8 +71,17 @@ export default function BotSettingsPage() {
           setIsPublic(botData.bot.is_public);
           setHeadline(botData.bot.headline || "");
           setAbout(botData.bot.about || "");
-          setSocialLinks(botData.bot.social_links || {});
           setSkills(botData.bot.skills || []);
+          setTheme(botData.bot.theme || "default");
+          setAvatarUrl(botData.bot.avatar_url || null);
+          setHighlights(botData.bot.highlights || []);
+          // Auto-migrate social_links to custom_links if needed
+          const cl = botData.bot.custom_links || [];
+          if (cl.length === 0 && botData.bot.social_links) {
+            setCustomLinks(migrateSocialLinksToCustomLinks(botData.bot.social_links));
+          } else {
+            setCustomLinks(cl);
+          }
         }
         setMemoryItems(memData.items || []);
       } catch (error) {
@@ -87,8 +106,11 @@ export default function BotSettingsPage() {
           is_public: isPublic,
           headline,
           about,
-          social_links: socialLinks,
           skills,
+          custom_links: customLinks,
+          highlights,
+          theme,
+          avatar_url: avatarUrl,
         }),
       });
     } finally {
@@ -149,6 +171,8 @@ export default function BotSettingsPage() {
     );
   }
 
+  const botUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/b/${bot.slug}`;
+
   return (
     <div className="min-h-screen bg-bg">
       <Navbar />
@@ -176,12 +200,21 @@ export default function BotSettingsPage() {
         </div>
 
         <div className="flex flex-col gap-6">
-          {/* Basic settings */}
+          {/* Bot details */}
           <Card>
             <CardHeader>
               <CardTitle>Bot details</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
+              {/* Avatar upload */}
+              <AvatarUpload
+                name={name || "Bot"}
+                currentUrl={avatarUrl}
+                botId={botId}
+                onUpload={(url) => setAvatarUrl(url)}
+                onRemove={() => setAvatarUrl(null)}
+              />
+
               <Input
                 label="Name"
                 value={name}
@@ -222,6 +255,16 @@ export default function BotSettingsPage() {
             </CardContent>
           </Card>
 
+          {/* Theme */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Theme</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ThemeSelector value={theme} onChange={setTheme} />
+            </CardContent>
+          </Card>
+
           {/* Profile */}
           <Card>
             <CardHeader>
@@ -229,7 +272,50 @@ export default function BotSettingsPage() {
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <SkillsInput skills={skills} onChange={setSkills} />
-              <SocialLinksInput links={socialLinks} onChange={setSocialLinks} />
+              <HighlightsInput highlights={highlights} onChange={setHighlights} />
+              <CustomLinksInput links={customLinks} onChange={setCustomLinks} />
+            </CardContent>
+          </Card>
+
+          {/* Sharing */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Sharing</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              <div className="rounded-xl border border-border bg-accent/20 p-3">
+                <p className="text-sm font-mono text-text break-all">{botUrl}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="primary" size="sm" onClick={copyLink} className="gap-1.5">
+                  {copied ? (
+                    <Check className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  ) : (
+                    <Share2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  )}
+                  {copied ? "Copied!" : "Copy Link"}
+                </Button>
+                <a
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out my personal AI bot: ${name}`)}&url=${encodeURIComponent(botUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="ghost" size="sm" className="gap-1.5">
+                    <Twitter className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    Twitter
+                  </Button>
+                </a>
+                <a
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(botUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="ghost" size="sm" className="gap-1.5">
+                    <Linkedin className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    LinkedIn
+                  </Button>
+                </a>
+              </div>
             </CardContent>
           </Card>
 

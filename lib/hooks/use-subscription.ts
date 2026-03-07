@@ -1,32 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export function useSubscription() {
   const [isActive, setIsActive] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function check() {
-      try {
-        const res = await fetch("/api/subscription/status");
-        if (!res.ok) throw new Error("Failed to check subscription");
-        const data = await res.json();
-        if (!cancelled) setIsActive(data.isActive);
-      } catch {
-        if (!cancelled) setIsActive(false);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+  const check = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const res = await fetch("/api/subscription/status");
+      if (!res.ok) throw new Error("Failed to check subscription");
+      const data = await res.json();
+      setIsActive(data.isActive);
+    } catch {
+      setIsActive(null);
+      setError(true);
+    } finally {
+      setLoading(false);
     }
-
-    check();
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
-  return { isActive, loading };
+  useEffect(() => {
+    check();
+  }, [check]);
+
+  return { isActive, loading, error, retry: check };
 }

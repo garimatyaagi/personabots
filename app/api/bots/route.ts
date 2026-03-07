@@ -13,6 +13,12 @@ const socialLinksSchema = z.object({
   website: z.string().max(500).optional().or(z.literal("")),
 }).default({});
 
+const customLinkSchema = z.object({
+  label: z.string().max(100),
+  url: z.string().max(500),
+  icon: z.string().max(50).optional(),
+});
+
 const createBotSchema = z.object({
   name: z.string().min(1).max(100),
   slug: z
@@ -27,6 +33,9 @@ const createBotSchema = z.object({
   social_links: socialLinksSchema.optional(),
   skills: z.array(z.string().max(50)).max(20).default([]),
   about: z.string().max(2000).optional(),
+  theme: z.enum(["default", "ocean", "forest", "sunset", "midnight", "lavender", "rose"]).default("default"),
+  custom_links: z.array(customLinkSchema).max(10).default([]),
+  highlights: z.array(z.string().max(200)).max(10).default([]),
   is_public: z.boolean().default(false),
   use_case_type: z.enum([
     "hiring",
@@ -138,6 +147,9 @@ export async function POST(req: NextRequest) {
         social_links: parsed.social_links || {},
         skills: parsed.skills || [],
         about: parsed.about || null,
+        theme: parsed.theme,
+        custom_links: parsed.custom_links || [],
+        highlights: parsed.highlights || [],
         is_public: parsed.is_public,
       })
       .select()

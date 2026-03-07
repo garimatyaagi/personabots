@@ -11,9 +11,10 @@ import type { ChatMessage } from "@/types";
 interface MessageBubbleProps {
   message: ChatMessage;
   botName: string;
+  botAvatarUrl?: string | null;
 }
 
-export function MessageBubble({ message, botName }: MessageBubbleProps) {
+export function MessageBubble({ message, botName, botAvatarUrl }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isTyping = message.isStreaming && !message.content;
 
@@ -24,7 +25,7 @@ export function MessageBubble({ message, botName }: MessageBubbleProps) {
         isUser ? "flex-row-reverse" : "flex-row"
       )}
     >
-      {!isUser && <Avatar name={botName} size="sm" />}
+      {!isUser && <Avatar name={botName} src={botAvatarUrl} size="sm" />}
 
       <div className="flex flex-col gap-1 max-w-[80%]">
         <div
@@ -32,7 +33,7 @@ export function MessageBubble({ message, botName }: MessageBubbleProps) {
             "relative rounded-xl px-4 py-2.5 text-sm leading-relaxed",
             isUser
               ? "bg-primary text-[#f8faed]"
-              : "bg-white/80 border border-border"
+              : "bg-[var(--surface-strong,rgba(255,255,255,0.8))] border border-border"
           )}
         >
           {isTyping ? (

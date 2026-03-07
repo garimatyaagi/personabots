@@ -7,10 +7,15 @@ import {
   Twitter,
   Github,
   Globe,
+  Youtube,
+  Instagram,
+  ExternalLink,
   Sparkles,
   X,
+  Trophy,
 } from "lucide-react";
-import type { SocialLinks } from "@/types";
+import type { SocialLinks, CustomLink } from "@/types";
+import { detectPlatformIcon, migrateSocialLinksToCustomLinks } from "@/lib/utils/migrate-links";
 
 interface ProfileSidebarProps {
   bot: {
@@ -21,6 +26,8 @@ interface ProfileSidebarProps {
     about: string | null;
     social_links: SocialLinks;
     skills: string[];
+    custom_links?: CustomLink[];
+    highlights?: string[];
   };
   capabilities: string[];
   suggestedPrompts: string[];
@@ -29,12 +36,19 @@ interface ProfileSidebarProps {
   onClose: () => void;
 }
 
-const SOCIAL_ICONS = [
-  { key: "linkedin" as const, icon: Linkedin, label: "LinkedIn" },
-  { key: "twitter" as const, icon: Twitter, label: "Twitter" },
-  { key: "github" as const, icon: Github, label: "GitHub" },
-  { key: "website" as const, icon: Globe, label: "Website" },
-];
+const ICON_MAP: Record<string, React.ElementType> = {
+  linkedin: Linkedin,
+  twitter: Twitter,
+  github: Github,
+  youtube: Youtube,
+  instagram: Instagram,
+  website: Globe,
+};
+
+function getLinkIcon(link: CustomLink): React.ElementType {
+  const detected = link.icon || (link.url ? detectPlatformIcon(link.url) : undefined);
+  return ICON_MAP[detected || ""] || ExternalLink;
+}
 
 export function ProfileSidebar({
   bot,
@@ -44,8 +58,16 @@ export function ProfileSidebar({
   isOpen,
   onClose,
 }: ProfileSidebarProps) {
-  const hasSocials = SOCIAL_ICONS.some((s) => bot.social_links[s.key]);
-  const hasProfile = bot.headline || bot.about || bot.skills.length > 0 || hasSocials;
+  // Use custom_links if available, otherwise migrate from social_links
+  const links: CustomLink[] =
+    bot.custom_links && bot.custom_links.length > 0
+      ? bot.custom_links
+      : migrateSocialLinksToCustomLinks(bot.social_links || {});
+  const highlights = bot.highlights || [];
+
+  const hasLinks = links.length > 0;
+  const hasProfile =
+    bot.headline || bot.about || bot.skills.length > 0 || hasLinks || highlights.length > 0;
 
   const sidebarContent = (
     <div className="flex flex-col gap-5 p-5">
@@ -62,23 +84,45 @@ export function ProfileSidebar({
         </div>
       </div>
 
-      {/* Social links */}
-      {hasSocials && (
-        <div className="flex items-center justify-center gap-2">
-          {SOCIAL_ICONS.map(({ key, icon: Icon, label }) =>
-            bot.social_links[key] ? (
+      {/* Custom links */}
+      {hasLinks && (
+        <div className="flex flex-col gap-1.5">
+          {links.map((link, i) => {
+            const Icon = getLinkIcon(link);
+            return (
               <a
-                key={key}
-                href={bot.social_links[key]}
+                key={i}
+                href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                title={label}
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/50 text-text transition-all hover:bg-accent hover:shadow-sm"
+                className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-text transition-all hover:bg-accent/30"
               >
-                <Icon className="h-4 w-4" strokeWidth={1.75} />
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent/50">
+                  <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
+                </div>
+                <span className="flex-1 truncate">{link.label || link.url}</span>
+                <ExternalLink className="h-3 w-3 text-muted-fg shrink-0" strokeWidth={1.75} />
               </a>
-            ) : null
-          )}
+            );
+          })}
+        </div>
+      )}
+
+      {/* Highlights */}
+      {highlights.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-muted-fg mb-2 flex items-center gap-1.5">
+            <Trophy className="h-3 w-3" strokeWidth={1.75} />
+            Highlights
+          </p>
+          <div className="flex flex-col gap-1.5">
+            {highlights.map((item, i) => (
+              <p key={i} className="text-xs text-text/80 pl-4 relative">
+                <span className="absolute left-0 text-primary">&bull;</span>
+                {item}
+              </p>
+            ))}
+          </div>
         </div>
       )}
 
@@ -111,9 +155,10 @@ export function ProfileSidebar({
       )}
 
       {/* Divider */}
-      {(hasProfile || bot.description) && (capabilities.length > 0 || suggestedPrompts.length > 0) && (
-        <div className="h-px bg-border" />
-      )}
+      {(hasProfile || bot.description) &&
+        (capabilities.length > 0 || suggestedPrompts.length > 0) && (
+          <div className="h-px bg-border" />
+        )}
 
       {/* Capabilities */}
       {capabilities.length > 0 && (
@@ -143,7 +188,7 @@ export function ProfileSidebar({
               <button
                 key={i}
                 onClick={() => onPromptSelect(prompt)}
-                className="rounded-lg border border-border bg-white/60 px-3 py-2 text-left text-xs text-text transition-all hover:border-primary/30 hover:bg-accent/20"
+                className="rounded-lg border border-border bg-[var(--surface,rgba(255,255,255,0.6))] px-3 py-2 text-left text-xs text-text transition-all hover:border-primary/30 hover:bg-accent/20"
               >
                 {prompt}
               </button>

@@ -5,10 +5,12 @@ import { Avatar } from "@/components/ui/avatar";
 import { MessageBubble } from "@/components/chat/message-bubble";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ProfileSidebar } from "@/components/bot/profile-sidebar";
+import { FollowUpSuggestions } from "@/components/chat/follow-up-suggestions";
+import { getThemeById, getThemeCSSVars } from "@/lib/themes";
 import { Bot, Sparkles, ChevronDown, PanelRight, User } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import Link from "next/link";
-import type { ChatMessage, SocialLinks } from "@/types";
+import type { ChatMessage, SocialLinks, CustomLink, BotTheme } from "@/types";
 
 interface PublicBotClientProps {
   bot: {
@@ -21,6 +23,9 @@ interface PublicBotClientProps {
     social_links: SocialLinks;
     skills: string[];
     about: string | null;
+    theme: BotTheme;
+    custom_links: CustomLink[];
+    highlights: string[];
   };
   capabilities: string[];
   suggestedPrompts: string[];
@@ -39,10 +44,16 @@ export function PublicBotClient({
   const [visitorId] = useState(() => uuidv4());
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [followUps, setFollowUps] = useState<string[]>([]);
+  const [followUpsLoading, setFollowUpsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const hasMessages = messages.length > 0;
+
+  // Compute theme CSS variables
+  const themePreset = getThemeById(bot.theme);
+  const themeVars = getThemeCSSVars(themePreset);
 
   // Default sidebar open on desktop
   useEffect(() => {
@@ -70,8 +81,45 @@ export function PublicBotClient({
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Fetch follow-up suggestions after assistant response
+  const fetchFollowUps = useCallback(
+    async (lastMessage: string) => {
+      // For first 2 exchanges (4 messages = 2 user + 2 assistant), use static playbook prompts
+      if (messages.length <= 4 && suggestedPrompts.length > 0) {
+        const shuffled = [...suggestedPrompts].sort(() => Math.random() - 0.5);
+        setFollowUps(shuffled.slice(0, 3));
+        return;
+      }
+
+      // For later exchanges, use AI-generated suggestions
+      setFollowUpsLoading(true);
+      try {
+        const res = await fetch("/api/chat/suggestions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            botSlug: bot.slug,
+            lastAssistantMessage: lastMessage,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setFollowUps(data.suggestions || []);
+        }
+      } catch {
+        // Fail silently
+      } finally {
+        setFollowUpsLoading(false);
+      }
+    },
+    [bot.slug, messages.length, suggestedPrompts]
+  );
+
   async function sendMessage(content: string) {
     if (isStreaming) return;
+
+    // Clear follow-ups when sending new message
+    setFollowUps([]);
 
     const userMessage: ChatMessage = {
       id: uuidv4(),
@@ -153,6 +201,11 @@ export function PublicBotClient({
             : m
         )
       );
+
+      // Fetch follow-up suggestions after stream completes
+      if (fullContent) {
+        fetchFollowUps(fullContent);
+      }
     } catch (error) {
       const errorMsg =
         error instanceof Error ? error.message : "Something went wrong";
@@ -173,7 +226,10 @@ export function PublicBotClient({
   }
 
   return (
-    <div className="flex h-dvh bg-bg">
+    <div
+      className="flex h-dvh bg-bg"
+      style={themeVars as React.CSSProperties}
+    >
       {/* Chat column */}
       <div className="relative flex flex-1 min-w-0 flex-col">
         {/* Compact header */}
@@ -217,7 +273,7 @@ export function PublicBotClient({
         {/* Chat area */}
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
           {!hasMessages ? (
-            /* Welcome screen - simplified since profile is in sidebar */
+            /* Welcome screen */
             <div className="flex h-full flex-col items-center justify-center px-4 py-12">
               <div className="flex flex-col items-center gap-4 max-w-md text-center">
                 <div className="relative">
@@ -255,7 +311,7 @@ export function PublicBotClient({
                         <button
                           key={i}
                           onClick={() => sendMessage(prompt)}
-                          className="rounded-xl border border-border bg-white/60 px-4 py-3 text-left text-sm text-text transition-all hover:border-primary/30 hover:bg-accent/20 hover:shadow-sm"
+                          className="rounded-xl border border-border bg-[var(--surface,rgba(255,255,255,0.6))] px-4 py-3 text-left text-sm text-text transition-all hover:border-primary/30 hover:bg-accent/20 hover:shadow-sm"
                         >
                           {prompt}
                         </button>
@@ -269,8 +325,23 @@ export function PublicBotClient({
             /* Messages */
             <div className="mx-auto max-w-3xl px-4 py-4 space-y-4">
               {messages.map((msg) => (
-                <MessageBubble key={msg.id} message={msg} botName={bot.name} />
+                <MessageBubble
+                  key={msg.id}
+                  message={msg}
+                  botName={bot.name}
+                  botAvatarUrl={bot.avatar_url}
+                />
               ))}
+
+              {/* Follow-up suggestions */}
+              {!isStreaming && (followUps.length > 0 || followUpsLoading) && (
+                <FollowUpSuggestions
+                  suggestions={followUps}
+                  onSelect={sendMessage}
+                  loading={followUpsLoading}
+                />
+              )}
+
               <div ref={messagesEndRef} />
             </div>
           )}
@@ -281,7 +352,7 @@ export function PublicBotClient({
           <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10">
             <button
               onClick={scrollToBottom}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white shadow-md transition-all hover:bg-accent/30"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-[var(--surface,rgba(255,255,255,0.6))] shadow-md transition-all hover:bg-accent/30"
             >
               <ChevronDown className="h-4 w-4 text-text" strokeWidth={2} />
             </button>
@@ -297,8 +368,20 @@ export function PublicBotClient({
               placeholder={`Ask ${bot.name} anything...`}
             />
             <p className="mt-2 text-center text-[10px] text-muted-fg/60">
-              Powered by Personal &mdash; AI responses may not always be
-              accurate
+              Powered by{" "}
+              <Link
+                href="/pricing"
+                className="underline hover:text-muted-fg transition-colors"
+              >
+                Personal
+              </Link>
+              {" "}&mdash;{" "}
+              <Link
+                href="/pricing"
+                className="underline hover:text-muted-fg transition-colors"
+              >
+                Create yours
+              </Link>
             </p>
           </div>
         </div>

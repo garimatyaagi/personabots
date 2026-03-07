@@ -49,6 +49,9 @@ export default async function PublicBotPage({ params }: Props) {
         social_links: bot.social_links || {},
         skills: bot.skills || [],
         about: bot.about || null,
+        theme: bot.theme || "default",
+        custom_links: bot.custom_links || [],
+        highlights: bot.highlights || [],
       }}
       capabilities={playbook?.capabilities || []}
       suggestedPrompts={playbook?.suggested_prompts || []}

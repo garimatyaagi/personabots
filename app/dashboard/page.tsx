@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { BotCard } from "@/components/dashboard/bot-card";
 import { Loading } from "@/components/shared/loading";
 import { useSubscription } from "@/lib/hooks/use-subscription";
-import { Plus, Bot, Sparkles, CreditCard } from "lucide-react";
+import { Plus, Bot, Sparkles, CreditCard, RefreshCw, Share2 } from "lucide-react";
 import type { BotWithUseCase } from "@/types";
 
 export default function DashboardPage() {
   const [bots, setBots] = useState<BotWithUseCase[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isActive: subActive, loading: subLoading } = useSubscription();
+  const { isActive: subActive, loading: subLoading, error: subError, retry } = useSubscription();
 
   useEffect(() => {
     async function fetchBots() {
@@ -61,8 +61,21 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Subscription error state */}
+      {!isLoading && subError && subActive === null && (
+        <div className="mt-6 rounded-2xl border border-border bg-muted p-8 text-center">
+          <p className="text-sm text-muted-fg">
+            Could not verify your subscription status.
+          </p>
+          <Button onClick={retry} variant="secondary" className="mt-3 gap-2">
+            <RefreshCw className="h-3.5 w-3.5" strokeWidth={1.75} />
+            Try again
+          </Button>
+        </div>
+      )}
+
       {/* Paywall banner for unpaid users */}
-      {!isLoading && !isPaid && (
+      {!isLoading && subActive === false && (
         <div className="mt-6 rounded-2xl border-2 border-primary/20 bg-primary/5 p-8 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent">
             <Sparkles className="h-7 w-7 text-primary" strokeWidth={1.75} />
@@ -103,11 +116,30 @@ export default function DashboardPage() {
           </Link>
         </div>
       ) : bots.length > 0 ? (
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {bots.map((bot) => (
-            <BotCard key={bot.id} bot={bot} />
-          ))}
-        </div>
+        <>
+          {/* Share encouragement banner */}
+          {isPaid && (
+            <div className="mt-4 rounded-xl border border-accent bg-accent/20 p-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent">
+                  <Share2 className="h-4 w-4 text-text" strokeWidth={1.75} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Share your bot with the world</p>
+                  <p className="text-xs text-muted-fg">
+                    Copy your bot link and share it on LinkedIn, Twitter, or anywhere
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {bots.map((bot) => (
+              <BotCard key={bot.id} bot={bot} />
+            ))}
+          </div>
+        </>
       ) : null}
     </div>
   );

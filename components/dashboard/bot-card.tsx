@@ -1,11 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Settings, MessageSquare } from "lucide-react";
+import {
+  ExternalLink,
+  Settings,
+  MessageSquare,
+  Share2,
+  Check,
+} from "lucide-react";
 import type { BotWithUseCase } from "@/types";
 
 interface BotCardProps {
@@ -13,9 +20,17 @@ interface BotCardProps {
 }
 
 export function BotCard({ bot }: BotCardProps) {
+  const [copied, setCopied] = useState(false);
   const useCase = bot.use_cases?.[0];
   const shareLink = bot.share_links?.[0];
   const isPublic = shareLink?.access !== "private";
+
+  function handleShare() {
+    const url = `${window.location.origin}/b/${bot.slug}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   return (
     <Card>
@@ -46,6 +61,22 @@ export function BotCard({ bot }: BotCardProps) {
         )}
 
         <div className="flex gap-2 pt-1">
+          {/* Share button — prominent first */}
+          {isPublic && (
+            <Button
+              variant="primary"
+              size="sm"
+              className="gap-1.5"
+              onClick={handleShare}
+            >
+              {copied ? (
+                <Check className="h-3.5 w-3.5" strokeWidth={1.75} />
+              ) : (
+                <Share2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+              )}
+              {copied ? "Copied!" : "Share"}
+            </Button>
+          )}
           {isPublic && (
             <Link href={`/b/${bot.slug}`} target="_blank">
               <Button variant="secondary" size="sm" className="gap-1.5">

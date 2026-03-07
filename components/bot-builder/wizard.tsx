@@ -7,8 +7,9 @@ import { StepBasics } from "./step-basics";
 import { StepMemory } from "./step-memory";
 import { StepUseCase } from "./step-usecase";
 import { StepPreview } from "./step-preview";
+import { PublishSuccessModal } from "./publish-success-modal";
 import { cn } from "@/lib/utils/cn";
-import { ArrowLeft, ArrowRight, Rocket, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Rocket } from "lucide-react";
 import type { BotBuilderState, AccessLevel } from "@/types";
 
 const STEPS = ["Basics", "Memory", "Use Case", "Preview"];
@@ -25,6 +26,10 @@ const initialState: BotBuilderState = {
     social_links: {},
     skills: [],
     about: "",
+    avatar_file: null,
+    theme: "default",
+    custom_links: [],
+    highlights: [],
   },
   memory: {
     uploads: [],
@@ -44,6 +49,10 @@ export function BotBuilderWizard() {
   const [state, setState] = useState<BotBuilderState>(initialState);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [publishedBot, setPublishedBot] = useState<{
+    name: string;
+    slug: string;
+  } | null>(null);
 
   function updateBasics(updates: Partial<BotBuilderState["basics"]>) {
     setState((s) => ({
@@ -110,6 +119,9 @@ export function BotBuilderWizard() {
           use_case_type: state.useCase.type,
           use_case_config: state.useCase.config,
           access: state.access,
+          theme: state.basics.theme,
+          custom_links: state.basics.custom_links,
+          highlights: state.basics.highlights,
         }),
       });
 
@@ -120,7 +132,22 @@ export function BotBuilderWizard() {
 
       const { bot } = await res.json();
 
-      // 2. Save notes and Q&A as memory
+      // 2. Upload avatar if selected
+      if (state.basics.avatar_file) {
+        try {
+          const formData = new FormData();
+          formData.append("file", state.basics.avatar_file);
+          formData.append("botId", bot.id);
+          await fetch("/api/upload/avatar", {
+            method: "POST",
+            body: formData,
+          });
+        } catch (avatarErr) {
+          console.error("Avatar upload error:", avatarErr);
+        }
+      }
+
+      // 3. Save notes and Q&A as memory
       if (state.memory.notes.trim()) {
         const formData = new FormData();
         formData.append("type", "text");
@@ -150,7 +177,7 @@ export function BotBuilderWizard() {
         await fetch("/api/memory/upload", { method: "POST", body: formData });
       }
 
-      // 3. Upload files as memory
+      // 4. Upload files as memory
       for (const file of state.memory.uploads) {
         try {
           const formData = new FormData();
@@ -171,7 +198,7 @@ export function BotBuilderWizard() {
         }
       }
 
-      // 4. Save links as memory
+      // 5. Save links as memory
       for (const link of state.memory.links) {
         const formData = new FormData();
         formData.append("type", "text");
@@ -183,7 +210,8 @@ export function BotBuilderWizard() {
         await fetch("/api/memory/upload", { method: "POST", body: formData });
       }
 
-      router.push("/dashboard");
+      // Show success modal instead of redirecting
+      setPublishedBot({ name: bot.name, slug: bot.slug });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -198,6 +226,15 @@ export function BotBuilderWizard() {
 
   return (
     <div className="mx-auto max-w-2xl">
+      {/* Success modal */}
+      {publishedBot && (
+        <PublishSuccessModal
+          botName={publishedBot.name}
+          botSlug={publishedBot.slug}
+          onClose={() => router.push("/dashboard")}
+        />
+      )}
+
       {/* Step indicator */}
       <div className="mb-8 flex items-center justify-center gap-2">
         {STEPS.map((label, i) => (
