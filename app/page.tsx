@@ -101,7 +101,7 @@ export default function LandingPage() {
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Link href="/sign-up">
                 <Button size="lg" className="gap-2 text-base">
-                  Create your bot — free
+                  Get started
                   <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
                 </Button>
               </Link>
@@ -112,7 +112,7 @@ export default function LandingPage() {
               </Link>
             </div>
             <p className="mt-4 text-sm text-muted-fg/70">
-              Takes 2 minutes. No credit card required.
+              Starting at &#8377;99/month. Takes 2 minutes to set up.
             </p>
           </div>
         </div>

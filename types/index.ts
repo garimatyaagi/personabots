@@ -162,3 +162,37 @@ export interface BotWithUseCase extends Bot {
   use_cases: BotUseCase[];
   share_links: ShareLink[];
 }
+
+// Subscription types
+export type SubscriptionStatus =
+  | "created"
+  | "authenticated"
+  | "active"
+  | "paused"
+  | "cancelled"
+  | "expired";
+
+export interface Subscription {
+  id: string;
+  user_id: string;
+  razorpay_subscription_id: string;
+  razorpay_plan_id: string;
+  status: SubscriptionStatus;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  cancelled_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Payment {
+  id: string;
+  subscription_id: string;
+  razorpay_payment_id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  method: string | null;
+  razorpay_signature: string | null;
+  created_at: string;
+}

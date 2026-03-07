@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getActiveSubscription, isSubscriptionValid } from "@/lib/subscription";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -71,6 +72,15 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Subscription gate — must have active subscription to create bots
+    const subscription = await getActiveSubscription(userId);
+    if (!isSubscriptionValid(subscription)) {
+      return NextResponse.json(
+        { error: "Active subscription required to create bots", code: "SUBSCRIPTION_REQUIRED" },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const parsed = createBotSchema.parse(body);
     const supabase = createServerClient();

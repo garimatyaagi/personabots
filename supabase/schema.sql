@@ -271,6 +271,55 @@ CREATE POLICY "Service role full access" ON messages FOR ALL USING (TRUE);
 CREATE POLICY "Service role full access" ON share_links FOR ALL USING (TRUE);
 
 -- ============================================
+-- SUBSCRIPTIONS & PAYMENTS
+-- ============================================
+
+CREATE TYPE subscription_status AS ENUM (
+  'created', 'authenticated', 'active', 'paused', 'cancelled', 'expired'
+);
+
+CREATE TABLE subscriptions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  razorpay_subscription_id TEXT NOT NULL UNIQUE,
+  razorpay_plan_id TEXT NOT NULL,
+  status subscription_status DEFAULT 'created' NOT NULL,
+  current_period_start TIMESTAMPTZ,
+  current_period_end TIMESTAMPTZ,
+  cancelled_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+CREATE INDEX idx_subscriptions_user_id ON subscriptions(user_id);
+CREATE INDEX idx_subscriptions_razorpay_id ON subscriptions(razorpay_subscription_id);
+CREATE INDEX idx_subscriptions_status ON subscriptions(status);
+
+CREATE TRIGGER tr_subscriptions_updated_at
+  BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service role full access" ON subscriptions FOR ALL USING (TRUE);
+
+CREATE TABLE payments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  subscription_id UUID NOT NULL REFERENCES subscriptions(id) ON DELETE CASCADE,
+  razorpay_payment_id TEXT NOT NULL UNIQUE,
+  amount INTEGER NOT NULL,
+  currency TEXT DEFAULT 'INR' NOT NULL,
+  status TEXT NOT NULL,
+  method TEXT,
+  razorpay_signature TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+CREATE INDEX idx_payments_subscription ON payments(subscription_id);
+CREATE INDEX idx_payments_razorpay_id ON payments(razorpay_payment_id);
+
+ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service role full access" ON payments FOR ALL USING (TRUE);
+
+-- ============================================
 -- STORAGE BUCKET
 -- ============================================
 -- Create via Supabase Dashboard:
