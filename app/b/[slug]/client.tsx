@@ -375,7 +375,7 @@ export function PublicBotClient({
               >
                 Personal
               </Link>
-              {" "}&mdash;{" "}
+              {" | "}
               <Link
                 href="/pricing"
                 className="underline hover:text-muted-fg transition-colors"

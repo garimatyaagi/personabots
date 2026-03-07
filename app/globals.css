@@ -44,4 +44,52 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Glass morphism */
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  /* Gradient text */
+  .text-gradient {
+    background: linear-gradient(135deg, var(--primary), #d44a47);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Subtle grid background */
+  .bg-grid {
+    background-image: linear-gradient(
+        rgba(24, 23, 23, 0.03) 1px,
+        transparent 1px
+      ),
+      linear-gradient(90deg, rgba(24, 23, 23, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Radial glow effects */
+  .glow-primary {
+    background: radial-gradient(
+      ellipse at center,
+      rgba(169, 27, 24, 0.08) 0%,
+      transparent 70%
+    );
+  }
+
+  .glow-accent {
+    background: radial-gradient(
+      ellipse at center,
+      rgba(206, 231, 243, 0.4) 0%,
+      transparent 70%
+    );
+  }
 }
