@@ -2,6 +2,7 @@ import { getOpenAI } from "@/lib/openai";
 import { createServerClient } from "@/lib/supabase/server";
 import { retrieveMemory, formatMemoryContext } from "@/lib/memory/retriever";
 import { buildSystemPrompt, summarizeConversation } from "./prompts";
+import type { BotMode } from "./prompts";
 import type { Bot, BotUseCase, Message } from "@/types";
 
 export async function createChatStream(params: {
@@ -10,8 +11,9 @@ export async function createChatStream(params: {
   conversationId: string;
   userMessage: string;
   isPublic: boolean;
+  mode?: BotMode;
 }) {
-  const { bot, useCase, conversationId, userMessage, isPublic } = params;
+  const { bot, useCase, conversationId, userMessage, isPublic, mode } = params;
   const supabase = createServerClient();
   const openai = getOpenAI();
 
@@ -47,6 +49,7 @@ export async function createChatStream(params: {
     bot,
     useCase,
     memoryContext,
+    mode,
   });
 
   // 5. Build message list

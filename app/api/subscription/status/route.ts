@@ -31,11 +31,13 @@ export async function GET() {
 
     return NextResponse.json({
       isActive,
+      planType: (subscription as unknown as Record<string, unknown>)?.plan_type || "creator",
       subscription: subscription
         ? {
             status: subscription.status,
             current_period_end: subscription.current_period_end,
             cancelled_at: subscription.cancelled_at,
+            plan_type: (subscription as unknown as Record<string, unknown>).plan_type || "creator",
           }
         : null,
     });

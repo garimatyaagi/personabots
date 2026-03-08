@@ -65,6 +65,7 @@ export interface Bot {
   custom_links: CustomLink[];
   highlights: string[];
   is_public: boolean;
+  calendar_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -172,6 +173,7 @@ export interface BotBuilderState {
     theme: BotTheme;
     custom_links: CustomLink[];
     highlights: string[];
+    calendar_url: string;
   };
   memory: {
     uploads: File[];
@@ -209,11 +211,14 @@ export type SubscriptionStatus =
   | "cancelled"
   | "expired";
 
+export type PlanType = "creator" | "recruiter";
+
 export interface Subscription {
   id: string;
   user_id: string;
   razorpay_subscription_id: string;
   razorpay_plan_id: string;
+  plan_type: PlanType;
   status: SubscriptionStatus;
   current_period_start: string | null;
   current_period_end: string | null;
@@ -232,4 +237,123 @@ export interface Payment {
   method: string | null;
   razorpay_signature: string | null;
   created_at: string;
+}
+
+// ──────────────────────────────────────────────
+// Career Copilot types
+// ──────────────────────────────────────────────
+
+export type JobSource = "paste" | "url" | "scrape" | "import";
+
+export type ApplicationStage =
+  | "discovered"
+  | "saved"
+  | "tailored"
+  | "applied"
+  | "interview"
+  | "offer"
+  | "archived";
+
+export type TailoredContentType =
+  | "summary"
+  | "resume_bullets"
+  | "cover_note"
+  | "recruiter_pitch"
+  | "interview_questions"
+  | "proof_points"
+  | "gap_analysis"
+  | "suggested_framing";
+
+export interface MatchAnalysis {
+  strengths: string[];
+  gaps: string[];
+  missing_skills: string[];
+  notes: string;
+}
+
+export interface Job {
+  id: string;
+  user_id: string;
+  title: string;
+  company: string | null;
+  location: string | null;
+  url: string | null;
+  description: string;
+  requirements: string[];
+  source: JobSource;
+  raw_input: string | null;
+  match_score: number | null;
+  match_analysis: MatchAnalysis;
+  metadata: Record<string, unknown>;
+  is_dismissed: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface JobWithApplication extends Job {
+  application: Application | null;
+}
+
+export interface Application {
+  id: string;
+  user_id: string;
+  job_id: string;
+  stage: ApplicationStage;
+  notes: string | null;
+  applied_at: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TailoredContent {
+  id: string;
+  user_id: string;
+  job_id: string;
+  content_type: TailoredContentType;
+  content: string;
+  is_edited: boolean;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProfileDimensions {
+  clarity: number;
+  credibility: number;
+  proof: number;
+  role_relevance: number;
+  keyword_coverage: number;
+  differentiation: number;
+  completeness: number;
+}
+
+export interface ProfileSuggestion {
+  dimension: keyof ProfileDimensions;
+  suggestion: string;
+  priority: "high" | "medium" | "low";
+}
+
+export interface ProfileScore {
+  id: string;
+  user_id: string;
+  bot_id: string | null;
+  overall_score: number;
+  dimensions: ProfileDimensions;
+  suggestions: ProfileSuggestion[];
+  analyzed_memory_count: number;
+  analyzed_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Parsed job data from AI extraction (before DB storage)
+export interface ParsedJobData {
+  title: string;
+  company: string | null;
+  location: string | null;
+  requirements: string[];
+  seniority: string | null;
+  job_type: string | null;
+  salary_range: string | null;
 }

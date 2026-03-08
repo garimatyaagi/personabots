@@ -2,14 +2,24 @@ import { createServerClient } from "@/lib/supabase/server";
 import { getPlaybook } from "@/lib/playbooks";
 import { PublicBotClient } from "./client";
 import { notFound } from "next/navigation";
+import type { BotMode } from "@/lib/chat/prompts";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ mode?: string }>;
 }
 
-export default async function PublicBotPage({ params }: Props) {
+const VALID_MODES: BotMode[] = ["default", "hiring", "consulting"];
+
+export default async function PublicBotPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { mode: modeParam } = await searchParams;
   const supabase = createServerClient();
+
+  // Validate mode from query param
+  const initialMode: BotMode = VALID_MODES.includes(modeParam as BotMode)
+    ? (modeParam as BotMode)
+    : "default";
 
   // Fetch bot by slug
   const { data: bot, error: botError } = await supabase
@@ -56,6 +66,7 @@ export default async function PublicBotPage({ params }: Props) {
       capabilities={playbook?.capabilities || []}
       suggestedPrompts={playbook?.suggested_prompts || []}
       useCaseType={useCase?.type || "custom"}
+      initialMode={initialMode}
     />
   );
 }

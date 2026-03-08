@@ -15,6 +15,7 @@ const STATS_CONFIG = [
     getValue: (props: StatsBarProps) => props.botCount,
     color: "text-primary",
     bg: "bg-primary/10",
+    ring: "ring-primary/5",
   },
   {
     key: "conversations",
@@ -23,6 +24,7 @@ const STATS_CONFIG = [
     getValue: (props: StatsBarProps) => props.totalConversations,
     color: "text-blue-600",
     bg: "bg-blue-50",
+    ring: "ring-blue-50",
   },
   {
     key: "views",
@@ -31,6 +33,7 @@ const STATS_CONFIG = [
     getValue: () => null as number | null,
     color: "text-amber-600",
     bg: "bg-amber-50",
+    ring: "ring-amber-50",
     comingSoon: true,
   },
   {
@@ -40,6 +43,7 @@ const STATS_CONFIG = [
     getValue: () => null as number | null,
     color: "text-green-600",
     bg: "bg-green-50",
+    ring: "ring-green-50",
     comingSoon: true,
   },
 ];
@@ -47,29 +51,37 @@ const STATS_CONFIG = [
 export function StatsBar(props: StatsBarProps) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {STATS_CONFIG.map((stat) => {
+      {STATS_CONFIG.map((stat, i) => {
         const value = stat.getValue(props);
         return (
           <div
             key={stat.key}
-            className="group rounded-xl border border-border bg-white/60 backdrop-blur-sm p-4 transition-all duration-200 hover:shadow-soft-hover"
+            className="group relative rounded-2xl border border-border bg-white/70 backdrop-blur-sm p-4 transition-all duration-300 hover:shadow-soft-hover hover:border-border/80 animate-fade-in overflow-hidden"
+            style={{
+              animationDelay: `${i * 60}ms`,
+              animationFillMode: "backwards",
+            }}
           >
-            <div className="flex items-center gap-2 mb-1.5">
-              <div
-                className={`flex h-6 w-6 items-center justify-center rounded-lg ${stat.bg}`}
-              >
-                <stat.icon
-                  className={`h-3 w-3 ${stat.color}`}
-                  strokeWidth={1.75}
-                />
+            {/* Subtle gradient overlay on hover */}
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${stat.bg} pointer-events-none`} style={{ opacity: 0 }} />
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-2">
+                <div
+                  className={`flex h-7 w-7 items-center justify-center rounded-lg ${stat.bg} ring-2 ${stat.ring} transition-transform duration-200 group-hover:scale-110`}
+                >
+                  <stat.icon
+                    className={`h-3.5 w-3.5 ${stat.color}`}
+                    strokeWidth={1.75}
+                  />
+                </div>
+                <span className="text-xs text-muted-fg font-medium">{stat.label}</span>
               </div>
-              <span className="text-xs text-muted-fg">{stat.label}</span>
+              {stat.comingSoon ? (
+                <p className="text-xs text-muted-fg/50 italic">Coming soon</p>
+              ) : (
+                <p className="text-2xl font-bold tracking-tight">{value ?? 0}</p>
+              )}
             </div>
-            {stat.comingSoon ? (
-              <p className="text-xs text-muted-fg/50 italic">Coming soon</p>
-            ) : (
-              <p className="text-2xl font-bold tracking-tight">{value ?? 0}</p>
-            )}
           </div>
         );
       })}

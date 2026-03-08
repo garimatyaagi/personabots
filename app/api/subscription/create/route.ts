@@ -1,17 +1,28 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { getRazorpay } from "@/lib/razorpay";
 
 export const dynamic = "force-dynamic";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
+    // Parse plan type from body (default to "creator" for backwards compatibility)
+    let planType = "creator";
+    try {
+      const body = await req.json();
+      if (body.plan_type === "recruiter") {
+        planType = "recruiter";
+      }
+    } catch {
+      // No body or invalid JSON - default to creator
+    }
+
     const supabase = createServerClient();
 
     // Check if user already has an active subscription
@@ -31,8 +42,12 @@ export async function POST() {
       });
     }
 
-    // Create Razorpay subscription
-    const planId = process.env.RAZORPAY_PLAN_ID;
+    // Select the appropriate plan ID
+    const planId =
+      planType === "recruiter"
+        ? process.env.RAZORPAY_RECRUITER_PLAN_ID || process.env.RAZORPAY_PLAN_ID
+        : process.env.RAZORPAY_PLAN_ID;
+
     if (!planId) {
       throw new Error("Missing RAZORPAY_PLAN_ID");
     }
@@ -40,15 +55,16 @@ export async function POST() {
     const razorpay = getRazorpay();
     const subscription = await razorpay.subscriptions.create({
       plan_id: planId,
-      total_count: 120, // max billing cycles
+      total_count: 120,
       customer_notify: 1,
     });
 
-    // Save to DB
+    // Save to DB with plan_type
     const { error: dbError } = await supabase.from("subscriptions").insert({
       user_id: userId,
       razorpay_subscription_id: subscription.id,
       razorpay_plan_id: planId,
+      plan_type: planType,
       status: "created",
     });
 

@@ -1,12 +1,42 @@
 import type { Bot, BotUseCase } from "@/types";
 import { getPlaybook } from "@/lib/playbooks";
 
+export type BotMode = "default" | "hiring" | "consulting";
+
+const MODE_ADDONS: Record<BotMode, string> = {
+  default: "",
+  hiring: `# MODE: HIRING
+You are speaking with a recruiter, hiring manager, or interviewer evaluating this person for a role.
+
+EMPHASIS IN THIS MODE:
+- Lead with quantified achievements: revenue impact, team size, project scale, percentage improvements.
+- Map your strengths explicitly to role requirements when the visitor mentions a specific role or company.
+- Proactively surface relevant proof points: "For example, at [Company] I led a team of X that delivered Y."
+- When discussing experience, emphasize progression, impact, and learning — not just responsibilities.
+- If asked about weaknesses or gaps, reframe honestly but constructively — show self-awareness and growth mindset.
+- Offer to provide references, portfolio links, or additional materials when relevant.
+- Keep responses concise and structured — hiring managers are busy.`,
+
+  consulting: `# MODE: CONSULTING
+You are speaking with a potential client or collaborator evaluating this person's problem-solving capabilities.
+
+EMPHASIS IN THIS MODE:
+- Lead with problem-solving frameworks and structured thinking.
+- Reference past consulting engagements, case studies, or complex projects from memory.
+- Demonstrate analytical rigor: break down problems, identify root causes, propose structured solutions.
+- Highlight domain expertise and industry knowledge relevant to the visitor's questions.
+- Share relevant methodologies and approaches used in past work.
+- Be direct about scope of expertise — clearly distinguish where you have deep vs. surface knowledge.
+- Offer actionable insights and next steps rather than generic advice.`,
+};
+
 export function buildSystemPrompt(params: {
   bot: Bot;
   useCase: BotUseCase | null;
   memoryContext: string;
+  mode?: BotMode;
 }): string {
-  const { bot, useCase, memoryContext } = params;
+  const { bot, useCase, memoryContext, mode = "default" } = params;
 
   const toneDescription =
     bot.tone <= 25
@@ -40,6 +70,12 @@ You speak as this person using "I" and first person. You ARE their representativ
   // Playbook
   if (customSystemPrompt) {
     parts.push(`# ROLE & BEHAVIOR\n${customSystemPrompt}`);
+  }
+
+  // Mode-specific instructions
+  const modeAddon = MODE_ADDONS[mode];
+  if (modeAddon) {
+    parts.push(modeAddon);
   }
 
   // Memory — THE critical section
@@ -76,7 +112,6 @@ export function summarizeConversation(
 ): string {
   if (messages.length <= 8) return "";
 
-  const recent = messages.slice(-8);
   const older = messages.slice(0, -8);
 
   const summary = older

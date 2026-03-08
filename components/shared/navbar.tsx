@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import { Bot, Compass } from "lucide-react";
+import { Bot, Compass, Briefcase, Activity, ListChecks } from "lucide-react";
 
 export function Navbar() {
   return (
@@ -39,6 +39,24 @@ export function Navbar() {
             <Link href="/dashboard">
               <Button variant="ghost" size="sm">
                 Dashboard
+              </Button>
+            </Link>
+            <Link href="/dashboard/jobs">
+              <Button variant="ghost" size="sm" className="gap-1.5 hidden sm:inline-flex">
+                <Briefcase className="h-3.5 w-3.5" strokeWidth={1.75} />
+                Jobs
+              </Button>
+            </Link>
+            <Link href="/dashboard/tracker">
+              <Button variant="ghost" size="sm" className="gap-1.5 hidden sm:inline-flex">
+                <ListChecks className="h-3.5 w-3.5" strokeWidth={1.75} />
+                Tracker
+              </Button>
+            </Link>
+            <Link href="/dashboard/profile">
+              <Button variant="ghost" size="sm" className="gap-1.5 hidden sm:inline-flex">
+                <Activity className="h-3.5 w-3.5" strokeWidth={1.75} />
+                Profile
               </Button>
             </Link>
             <UserButton

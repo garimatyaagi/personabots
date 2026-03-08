@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from "uuid";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { botSlug, message, conversationId, visitorId } = body;
+    const { botSlug, message, conversationId, visitorId, mode } = body;
 
     if (!botSlug || !message || typeof message !== "string") {
       return new Response(
@@ -115,6 +115,10 @@ export async function POST(req: NextRequest) {
 
     const useCase = useCases?.[0] || null;
 
+    // Validate mode if provided
+    const validModes = ["default", "hiring", "consulting"];
+    const chatMode = validModes.includes(mode) ? mode : undefined;
+
     // Create streaming response
     const stream = await createChatStream({
       bot,
@@ -122,6 +126,7 @@ export async function POST(req: NextRequest) {
       conversationId: convId,
       userMessage: message,
       isPublic: isPublicAccess,
+      mode: chatMode,
     });
 
     // Stream the response

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import type { PlanType } from "@/types";
 
 export function useSubscription() {
   const [isActive, setIsActive] = useState<boolean | null>(null);
+  const [planType, setPlanType] = useState<PlanType>("creator");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -15,6 +17,7 @@ export function useSubscription() {
       if (!res.ok) throw new Error("Failed to check subscription");
       const data = await res.json();
       setIsActive(data.isActive);
+      setPlanType(data.planType || "creator");
     } catch {
       setIsActive(null);
       setError(true);
@@ -27,5 +30,5 @@ export function useSubscription() {
     check();
   }, [check]);
 
-  return { isActive, loading, error, retry: check };
+  return { isActive, planType, loading, error, retry: check };
 }

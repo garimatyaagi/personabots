@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Check,
   Copy,
+  ArrowUpRight,
 } from "lucide-react";
 import type { BotWithUseCase } from "@/types";
 
@@ -34,7 +35,10 @@ export function BotCard({ bot }: BotCardProps) {
   }
 
   return (
-    <Card className="card-hover group">
+    <Card className="card-hover group relative overflow-hidden">
+      {/* Subtle top accent line */}
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/40 via-accent/60 to-primary/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
       <CardContent className="flex flex-col gap-3">
         {/* Header row */}
         <div className="flex items-start justify-between">
@@ -46,13 +50,18 @@ export function BotCard({ bot }: BotCardProps) {
               )}
             </div>
             <div>
-              <h3 className="font-semibold leading-tight">{bot.name}</h3>
+              <h3 className="font-semibold leading-tight group-hover:text-primary transition-colors">
+                {bot.name}
+              </h3>
               <p className="text-xs text-muted-fg">/b/{bot.slug}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <BotCompleteness bot={bot} size="sm" />
-            <Badge variant={isPublic ? "default" : "muted"}>
+            <Badge
+              variant={isPublic ? "default" : "muted"}
+              className={isPublic ? "bg-green-50 text-green-700 border-green-200" : ""}
+            >
               {isPublic ? "Live" : "Private"}
             </Badge>
           </div>
@@ -65,22 +74,46 @@ export function BotCard({ bot }: BotCardProps) {
           </p>
         )}
 
+        {/* Skills preview */}
+        {bot.skills && bot.skills.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {bot.skills.slice(0, 3).map((skill) => (
+              <span
+                key={skill}
+                className="rounded-md bg-accent/30 px-1.5 py-0.5 text-[10px] text-muted-fg"
+              >
+                {skill}
+              </span>
+            ))}
+            {bot.skills.length > 3 && (
+              <span className="text-[10px] text-muted-fg/40 px-1">
+                +{bot.skills.length - 3}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Tags row */}
         {useCase && (
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="capitalize text-xs">
               {useCase.type}
             </Badge>
+            {bot.calendar_url && (
+              <Badge variant="outline" className="text-xs text-violet-600 border-violet-200 bg-violet-50/50">
+                Bookable
+              </Badge>
+            )}
           </div>
         )}
 
         {/* Action buttons */}
-        <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+        <div className="flex items-center gap-1.5 pt-2 border-t border-border/50">
           {isPublic && (
             <Button
               variant="ghost"
               size="sm"
-              className="gap-1.5 text-xs press-effect"
+              className="gap-1.5 text-xs press-effect h-8"
               onClick={handleShare}
             >
               {copied ? (
@@ -93,21 +126,21 @@ export function BotCard({ bot }: BotCardProps) {
           )}
           {isPublic && (
             <Link href={`/b/${bot.slug}`} target="_blank">
-              <Button variant="ghost" size="sm" className="gap-1.5 text-xs press-effect">
-                <ExternalLink className="h-3 w-3" strokeWidth={1.75} />
+              <Button variant="ghost" size="sm" className="gap-1.5 text-xs press-effect h-8">
+                <ArrowUpRight className="h-3 w-3" strokeWidth={1.75} />
                 Preview
               </Button>
             </Link>
           )}
           <div className="flex-1" />
           <Link href={`/bot/${bot.id}/conversations`}>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-xs press-effect">
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs press-effect h-8">
               <MessageSquare className="h-3 w-3" strokeWidth={1.75} />
               Chats
             </Button>
           </Link>
           <Link href={`/bot/${bot.id}`}>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-xs press-effect">
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs press-effect h-8">
               <Settings className="h-3 w-3" strokeWidth={1.75} />
               Edit
             </Button>

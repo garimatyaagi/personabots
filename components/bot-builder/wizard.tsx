@@ -8,13 +8,14 @@ import { StepMemory } from "./step-memory";
 import { StepUseCase } from "./step-usecase";
 import { StepPreview } from "./step-preview";
 import { PublishSuccessModal } from "./publish-success-modal";
+import { useWizardPersistence } from "@/lib/hooks/use-wizard-persistence";
 import { cn } from "@/lib/utils/cn";
-import { ArrowLeft, ArrowRight, Rocket, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Rocket, Check, FileText } from "lucide-react";
 import type { BotBuilderState, AccessLevel } from "@/types";
 
 const STEPS = ["Basics", "Memory", "Use Case", "Preview"];
 
-const initialState: BotBuilderState = {
+const defaultState: BotBuilderState = {
   step: 1,
   basics: {
     name: "",
@@ -30,6 +31,7 @@ const initialState: BotBuilderState = {
     theme: "default",
     custom_links: [],
     highlights: [],
+    calendar_url: "",
   },
   memory: {
     uploads: [],
@@ -46,13 +48,31 @@ const initialState: BotBuilderState = {
 
 export function BotBuilderWizard() {
   const router = useRouter();
-  const [state, setState] = useState<BotBuilderState>(initialState);
+  const { initialState, hasDraft, saveDraft, clearDraft } =
+    useWizardPersistence(defaultState);
+  const [state, setState] = useState<BotBuilderState>(defaultState);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [draftLoaded, setDraftLoaded] = useState(false);
   const [publishedBot, setPublishedBot] = useState<{
     name: string;
     slug: string;
   } | null>(null);
+
+  // Restore draft on mount
+  useEffect(() => {
+    if (hasDraft && initialState.basics.name) {
+      setState(initialState);
+      setDraftLoaded(true);
+    }
+  }, [hasDraft, initialState]);
+
+  // Auto-save state changes
+  useEffect(() => {
+    if (state.basics.name.trim()) {
+      saveDraft(state);
+    }
+  }, [state, saveDraft]);
 
   // Step transition animation state
   const [slideDirection, setSlideDirection] = useState<"left" | "right">("left");
@@ -150,6 +170,7 @@ export function BotBuilderWizard() {
           theme: state.basics.theme,
           custom_links: state.basics.custom_links,
           highlights: state.basics.highlights,
+          calendar_url: state.basics.calendar_url || null,
         }),
       });
 
@@ -238,7 +259,8 @@ export function BotBuilderWizard() {
         await fetch("/api/memory/upload", { method: "POST", body: formData });
       }
 
-      // Show success modal instead of redirecting
+      // Clear draft and show success modal
+      clearDraft();
       setPublishedBot({ name: bot.name, slug: bot.slug });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -264,6 +286,26 @@ export function BotBuilderWizard() {
           botSlug={publishedBot.slug}
           onClose={() => router.push("/dashboard")}
         />
+      )}
+
+      {/* Draft restored banner */}
+      {draftLoaded && (
+        <div className="mb-4 flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-2.5 text-sm animate-fade-in">
+          <span className="flex items-center gap-2 text-amber-800">
+            <FileText className="h-4 w-4" strokeWidth={1.75} />
+            Draft restored. Pick up where you left off!
+          </span>
+          <button
+            onClick={() => {
+              clearDraft();
+              setState(defaultState);
+              setDraftLoaded(false);
+            }}
+            className="text-xs font-medium text-amber-600 hover:text-amber-800 transition-colors"
+          >
+            Start fresh
+          </button>
+        </div>
       )}
 
       {/* Step indicator with progress bar */}

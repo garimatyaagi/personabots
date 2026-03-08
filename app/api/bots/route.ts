@@ -36,6 +36,7 @@ const createBotSchema = z.object({
   theme: z.enum(["default", "ocean", "forest", "sunset", "midnight", "lavender", "rose"]).default("default"),
   custom_links: z.array(customLinkSchema).max(10).default([]),
   highlights: z.array(z.string().max(200)).max(10).default([]),
+  calendar_url: z.string().max(500).optional().nullable(),
   is_public: z.boolean().default(false),
   use_case_type: z.enum([
     "hiring",
@@ -150,6 +151,7 @@ export async function POST(req: NextRequest) {
         theme: parsed.theme,
         custom_links: parsed.custom_links || [],
         highlights: parsed.highlights || [],
+        calendar_url: parsed.calendar_url || null,
         is_public: parsed.is_public,
       })
       .select()

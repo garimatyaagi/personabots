@@ -18,6 +18,7 @@ import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { ThemeSelector } from "@/components/ui/theme-selector";
 import { migrateSocialLinksToCustomLinks } from "@/lib/utils/migrate-links";
 import { QRCode } from "@/components/ui/qr-code";
+import { CalendarSettings } from "@/components/bot-builder/calendar-settings";
 import {
   Save,
   Trash2,
@@ -57,6 +58,7 @@ export default function BotSettingsPage() {
   const [highlights, setHighlights] = useState<string[]>([]);
   const [theme, setTheme] = useState<BotTheme>("default");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [calendarUrl, setCalendarUrl] = useState("");
 
   // Track original values to detect changes
   const [originalValues, setOriginalValues] = useState<string>("");
@@ -74,8 +76,9 @@ export default function BotSettingsPage() {
       highlights,
       theme,
       avatarUrl,
+      calendarUrl,
     });
-  }, [name, description, tone, isPublic, headline, about, skills, customLinks, highlights, theme, avatarUrl]);
+  }, [name, description, tone, isPublic, headline, about, skills, customLinks, highlights, theme, avatarUrl, calendarUrl]);
 
   useEffect(() => {
     if (originalValues) {
@@ -105,6 +108,7 @@ export default function BotSettingsPage() {
           setTheme(botData.bot.theme || "default");
           setAvatarUrl(botData.bot.avatar_url || null);
           setHighlights(botData.bot.highlights || []);
+          setCalendarUrl(botData.bot.calendar_url || "");
           // Auto-migrate social_links to custom_links if needed
           const cl = botData.bot.custom_links || [];
           if (cl.length === 0 && botData.bot.social_links) {
@@ -129,6 +133,7 @@ export default function BotSettingsPage() {
               highlights: botData.bot.highlights || [],
               theme: botData.bot.theme || "default",
               avatarUrl: botData.bot.avatar_url || null,
+              calendarUrl: botData.bot.calendar_url || "",
             });
             setOriginalValues(vals);
           }, 100);
@@ -162,6 +167,7 @@ export default function BotSettingsPage() {
           highlights,
           theme,
           avatar_url: avatarUrl,
+          calendar_url: calendarUrl || null,
         }),
       });
       if (res.ok) {
@@ -351,6 +357,10 @@ export default function BotSettingsPage() {
               <SkillsInput skills={skills} onChange={setSkills} />
               <HighlightsInput highlights={highlights} onChange={setHighlights} />
               <CustomLinksInput links={customLinks} onChange={setCustomLinks} />
+              <CalendarSettings
+                calendarUrl={calendarUrl}
+                onChange={setCalendarUrl}
+              />
             </CardContent>
           </Card>
 

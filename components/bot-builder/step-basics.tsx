@@ -9,6 +9,9 @@ import { CustomLinksInput } from "@/components/bot-builder/custom-links-input";
 import { HighlightsInput } from "@/components/bot-builder/highlights-input";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { ThemeSelector } from "@/components/ui/theme-selector";
+import { CalendarSettings } from "@/components/bot-builder/calendar-settings";
+import { useSlugCheck } from "@/lib/hooks/use-slug-check";
+import { Check, X, Loader2 } from "lucide-react";
 import type { BotBuilderState } from "@/types";
 
 interface StepBasicsProps {
@@ -27,6 +30,7 @@ const PERSONALITY_TRAITS = [
 
 export function StepBasics({ state, onChange }: StepBasicsProps) {
   const { basics } = state;
+  const slugCheck = useSlugCheck(basics.slug);
 
   function generateSlug(name: string) {
     return name
@@ -74,9 +78,31 @@ export function StepBasics({ state, onChange }: StepBasicsProps) {
         value={basics.slug}
         onChange={(e) => onChange({ slug: e.target.value })}
       />
-      <p className="text-xs text-muted-fg -mt-4">
-        Your bot will be at: /b/{basics.slug || "your-slug"}
-      </p>
+      <div className="flex items-center gap-2 -mt-4">
+        <p className="text-xs text-muted-fg">
+          Your bot will be at: /b/{basics.slug || "your-slug"}
+        </p>
+        {basics.slug.length >= 2 && (
+          <span className="flex items-center gap-1 text-xs">
+            {slugCheck.checking ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin text-muted-fg" strokeWidth={2} />
+                <span className="text-muted-fg">Checking...</span>
+              </>
+            ) : slugCheck.available === true ? (
+              <>
+                <Check className="h-3 w-3 text-green-600" strokeWidth={2} />
+                <span className="text-green-600">Available</span>
+              </>
+            ) : slugCheck.available === false ? (
+              <>
+                <X className="h-3 w-3 text-red-500" strokeWidth={2} />
+                <span className="text-red-500">{slugCheck.reason || "Taken"}</span>
+              </>
+            ) : null}
+          </span>
+        )}
+      </div>
 
       <Input
         id="bot-headline"
@@ -158,6 +184,11 @@ export function StepBasics({ state, onChange }: StepBasicsProps) {
       <ThemeSelector
         value={basics.theme}
         onChange={(theme) => onChange({ theme })}
+      />
+
+      <CalendarSettings
+        calendarUrl={basics.calendar_url}
+        onChange={(calendar_url) => onChange({ calendar_url })}
       />
     </div>
   );

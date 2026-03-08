@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { BotCard } from "@/components/dashboard/bot-card";
 import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
 import { StatsBar } from "@/components/dashboard/stats-bar";
+import { CareerStatsBar } from "@/components/dashboard/career-stats-bar";
+import { QuickActions } from "@/components/dashboard/quick-actions";
 import { OnboardingModal } from "@/components/shared/onboarding-modal";
 import { useSubscription } from "@/lib/hooks/use-subscription";
 import { useUser } from "@clerk/nextjs";
@@ -16,6 +18,9 @@ import {
   RefreshCw,
   Rocket,
   ArrowRight,
+  Zap,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import type { BotWithUseCase } from "@/types";
 
@@ -26,6 +31,14 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [totalConversations, setTotalConversations] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showBots, setShowBots] = useState(false);
+  // Career stats
+  const [careerStats, setCareerStats] = useState({
+    jobsFound: 0,
+    jobsSaved: 0,
+    applicationsInProgress: 0,
+    profileStrength: null as number | null,
+  });
   const {
     isActive: subActive,
     loading: subLoading,
@@ -65,6 +78,40 @@ export default function DashboardPage() {
     fetchBots();
   }, []);
 
+  // Fetch career stats
+  useEffect(() => {
+    async function fetchCareerStats() {
+      try {
+        const [jobsRes, profileRes] = await Promise.all([
+          fetch("/api/jobs"),
+          fetch("/api/profile/score"),
+        ]);
+        const jobsData = await jobsRes.json();
+        const profileData = await profileRes.json();
+
+        const jobs = jobsData.jobs || [];
+        const saved = jobs.filter(
+          (j: { application?: { stage: string } }) =>
+            j.application?.stage === "saved" || j.application?.stage === "tailored"
+        );
+        const inProgress = jobs.filter(
+          (j: { application?: { stage: string } }) =>
+            j.application?.stage === "applied" || j.application?.stage === "interview"
+        );
+
+        setCareerStats({
+          jobsFound: jobs.length,
+          jobsSaved: saved.length,
+          applicationsInProgress: inProgress.length,
+          profileStrength: profileData.score?.overall_score ?? null,
+        });
+      } catch {
+        // Silently fail, keep defaults
+      }
+    }
+    fetchCareerStats();
+  }, []);
+
   const isLoading = loading || subLoading;
   const isPaid = subActive === true;
   const firstName = user?.firstName || "there";
@@ -97,11 +144,11 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-semibold tracking-heading">
             {greeting}, {firstName}
           </h1>
-          <p className="text-sm text-muted-fg">
-            Here&apos;s what&apos;s happening with your bots.
+          <p className="text-sm text-muted-fg mt-0.5">
+            Here&apos;s your career copilot overview.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Link href="/dashboard/billing">
             <Button
               variant="ghost"
@@ -114,7 +161,7 @@ export default function DashboardPage() {
           </Link>
           {isPaid && (
             <Link href="/bot/new">
-              <Button className="gap-2 press-effect">
+              <Button className="gap-2 press-effect shadow-sm">
                 <Plus className="h-4 w-4" strokeWidth={1.75} />
                 New Bot
               </Button>
@@ -125,7 +172,7 @@ export default function DashboardPage() {
 
       {/* Subscription error state */}
       {!isLoading && subError && subActive === null && (
-        <div className="mt-6 rounded-2xl border border-border bg-muted p-8 text-center animate-fade-in">
+        <div className="mt-6 rounded-2xl border border-border bg-white/60 backdrop-blur-sm p-8 text-center animate-fade-in">
           <p className="text-sm text-muted-fg">
             Could not verify your subscription status.
           </p>
@@ -142,23 +189,29 @@ export default function DashboardPage() {
 
       {/* Paywall banner for unpaid users */}
       {!isLoading && subActive === false && (
-        <div className="mt-6 rounded-2xl border-2 border-primary/20 bg-primary/5 p-8 text-center animate-fade-in">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent">
-            <Sparkles className="h-7 w-7 text-primary" strokeWidth={1.75} />
+        <div className="mt-6 relative overflow-hidden rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-bg to-accent/10 p-8 text-center animate-fade-in">
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-40 h-40 bg-accent/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+
+          <div className="relative">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/30">
+              <Zap className="h-7 w-7 text-primary" strokeWidth={1.75} />
+            </div>
+            <h2 className="mt-4 text-xl font-semibold">
+              Subscribe to start building
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-sm text-muted-fg leading-relaxed">
+              Get unlimited AI bots, GPT-4o powered chat, shareable links, calendar
+              booking, and more starting at just &#8377;99/month.
+            </p>
+            <Link href="/pricing" className="mt-6 inline-block">
+              <Button size="lg" className="gap-2 press-effect shadow-md">
+                <Sparkles className="h-4 w-4" strokeWidth={1.75} />
+                View plans
+              </Button>
+            </Link>
           </div>
-          <h2 className="mt-4 text-xl font-semibold">
-            Subscribe to start building
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-sm text-muted-fg">
-            Get unlimited AI bots, GPT-4o powered chat, shareable links, and
-            more for just &#8377;99/month.
-          </p>
-          <Link href="/pricing" className="mt-6 inline-block">
-            <Button size="lg" className="gap-2 press-effect">
-              <Sparkles className="h-4 w-4" strokeWidth={1.75} />
-              Subscribe &#8377;99/month
-            </Button>
-          </Link>
         </div>
       )}
 
@@ -168,10 +221,10 @@ export default function DashboardPage() {
         /* Rich empty state */
         <div className="mt-12 flex flex-col items-center gap-6 text-center animate-fade-in">
           <div className="relative">
-            <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-accent to-accent/40">
+            <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-accent to-accent/40 shadow-sm">
               <Rocket className="h-9 w-9 text-primary" strokeWidth={1.5} />
             </div>
-            <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary ring-4 ring-bg">
+            <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary ring-4 ring-bg shadow-sm">
               <Sparkles
                 className="h-3.5 w-3.5 text-[#f8faed]"
                 strokeWidth={2}
@@ -188,7 +241,7 @@ export default function DashboardPage() {
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link href="/bot/new">
-              <Button size="lg" className="gap-2 press-effect">
+              <Button size="lg" className="gap-2 press-effect shadow-sm">
                 <Plus className="h-4 w-4" strokeWidth={1.75} />
                 Create your first bot
               </Button>
@@ -223,10 +276,14 @@ export default function DashboardPage() {
                 title: "Share one link",
                 desc: "LinkedIn, email signature, portfolio",
               },
-            ].map((tip) => (
+            ].map((tip, i) => (
               <div
                 key={tip.title}
-                className="rounded-xl border border-border bg-white/60 p-4 text-left"
+                className="rounded-2xl border border-border bg-white/60 backdrop-blur-sm p-4 text-left transition-all hover:shadow-soft-hover animate-fade-in"
+                style={{
+                  animationDelay: `${i * 100}ms`,
+                  animationFillMode: "backwards",
+                }}
               >
                 <span className="text-xl">{tip.icon}</span>
                 <p className="mt-2 text-sm font-medium">{tip.title}</p>
@@ -237,30 +294,49 @@ export default function DashboardPage() {
         </div>
       ) : bots.length > 0 ? (
         <div className="animate-fade-in">
-          {/* Stats bar */}
+          {/* Career Stats */}
           {isPaid && (
             <div className="mt-6">
-              <StatsBar
-                botCount={bots.length}
-                totalConversations={totalConversations}
-              />
+              <CareerStatsBar {...careerStats} />
             </div>
           )}
 
-          {/* Bot grid */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {bots.map((bot, i) => (
-              <div
-                key={bot.id}
-                className="animate-fade-in"
-                style={{
-                  animationDelay: `${i * 80}ms`,
-                  animationFillMode: "backwards",
-                }}
-              >
-                <BotCard bot={bot} />
+          {/* Quick Actions */}
+          {isPaid && (
+            <div className="mt-4">
+              <QuickActions />
+            </div>
+          )}
+
+          {/* Collapsible Bot Section */}
+          <div className="mt-8">
+            <button
+              onClick={() => setShowBots(!showBots)}
+              className="flex items-center gap-2 text-sm font-semibold text-fg hover:text-primary transition-colors mb-4"
+            >
+              {showBots ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+              Your Bots ({bots.length})
+            </button>
+            {showBots && (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-in">
+                {bots.map((bot, i) => (
+                  <div
+                    key={bot.id}
+                    className="animate-fade-in"
+                    style={{
+                      animationDelay: `${i * 80}ms`,
+                      animationFillMode: "backwards",
+                    }}
+                  >
+                    <BotCard bot={bot} />
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         </div>
       ) : null}

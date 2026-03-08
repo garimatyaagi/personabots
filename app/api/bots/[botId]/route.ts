@@ -59,6 +59,7 @@ const updateBotSchema = z.object({
   custom_links: z.array(customLinkSchema).max(10).optional(),
   highlights: z.array(z.string().max(200)).max(10).optional(),
   is_public: z.boolean().optional(),
+  calendar_url: z.string().max(500).optional().nullable(),
 });
 
 // PATCH /api/bots/:botId — update bot
